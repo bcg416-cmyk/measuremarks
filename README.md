@@ -41,3 +41,6 @@ Then open:
 
 ## Cloudflare
 Static deployment; no build command required.
+
+
+Dev deployment trigger: V0.5-dev.1
