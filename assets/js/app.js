@@ -18,7 +18,7 @@ const $=s=>document.querySelector(s), E={span:$('#span'),spanFeet:$('#spanFeet')
 let units='imperial',data=null,fieldIndex=0;
 const fmt=(v,x=false)=>formatValue(v,units,Number(E.precision.value),x);
 function setLabel(el,text){const l=el?.closest('label');if(l?.firstChild)l.firstChild.nodeValue=text+' '}
-function updateUnitLabels(){setLabel(E.width,'Item width ('+(units==='metric'?'mm':'inches')+')')}
+function updateUnitLabels(){const u=units==='metric'?'mm':'inches';setLabel(E.span,'Total span ('+u+')');setLabel(E.width,'Item width ('+u+')')}
 function preset(){
   if(units==='imperial'){
     E.span.value=C.span;E.width.value=C.width;
