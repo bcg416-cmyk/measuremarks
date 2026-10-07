@@ -27,6 +27,8 @@ function fmt(v,long=false){
  const sign=v<0?'-':'';v=Math.abs(v);const ft=Math.floor(v/12),inch=v-ft*12;
  return sign+ft+"' "+frac(inch,d);
 }
+function setLabel(el,text){const l=el?.closest('label');if(l?.firstChild)l.firstChild.nodeValue=text+' '}
+function updateUnitLabels(){const u=units==='metric'?'mm':'inches';setLabel(E.tile,'Tile width ('+u+')');setLabel(E.grout,'Grout joint width ('+u+')');setLabel(E.minCut,'Preferred minimum edge cut ('+u+')')}
 function roundMark(v){
  return units==='metric'?Math.round(v*10)/10:Math.round(v*Number(E.precision.value||16))/Number(E.precision.value||16);
 }
@@ -51,7 +53,7 @@ function defaults(){
  }else{
    E.span.value=2438;E.tile.value=305;E.grout.value=3;E.minCut.value=76;E.mode.value='inches';
  }
- syncMode();
+ syncMode();updateUnitLabels();
 }
 
 function buildCandidate(span,tile,grout,mode){
@@ -118,11 +120,14 @@ function calculate(){
  draw(E.diagram);draw(E.printDiagram);fieldIndex=0;renderField();
 }
 
+function defs(svg){const d=mk('defs'),m=mk('marker',{id:'tileArrow',viewBox:'0 0 10 10',refX:5,refY:5,markerWidth:6,markerHeight:6,orient:'auto-start-reverse'});m.appendChild(mk('path',{d:'M0 0L10 5L0 10z',fill:'#405047'}));d.appendChild(m);svg.appendChild(d)}
+function dimLabel(svg,x,y,t){const w=Math.max(54,t.length*6.2+12);svg.appendChild(mk('rect',{x:x-w/2,y:y-13,width:w,height:18,rx:4,fill:'#fbfcfa'}));svg.appendChild(mk('text',{x,y,'text-anchor':'middle','font-size':11,'font-weight':750,fill:'#26342b'},t))}
+function dimH(svg,x1,x2,y,t,extY){if(Math.abs(x2-x1)<5)return;[x1,x2].forEach(x=>svg.appendChild(mk('line',{x1:x,y1:extY,x2:x,y2:y+5,stroke:'#829087'})));svg.appendChild(mk('line',{x1,y1:y,x2,y2:y,stroke:'#405047','stroke-width':1.2,'marker-start':'url(#tileArrow)','marker-end':'url(#tileArrow)'}));dimLabel(svg,(x1+x2)/2,y-5,t)}
 function mk(tag,a={},text=''){const n=document.createElementNS(NS,tag);Object.entries(a).forEach(([k,v])=>n.setAttribute(k,v));if(text)n.textContent=text;return n}
 function draw(svg){
  if(!svg||!data)return;svg.innerHTML='';
  const {span,tile,grout,best}=data;
- svg.appendChild(mk('rect',{x:0,y:0,width:980,height:410,rx:14,fill:'#fbfcfa'}));
+ svg.appendChild(mk('rect',{x:0,y:0,width:980,height:410,rx:14,fill:'#fbfcfa'}));defs(svg);
  svg.appendChild(mk('text',{x:52,y:34,'font-size':18,'font-weight':850,fill:'#18211a'},'Balanced tile layout'));
  const left=70,right=910,top=118,bottom=292,scale=(right-left)/span;
  svg.appendChild(mk('rect',{x:left,y:top,width:right-left,height:bottom-top,fill:'#e5e1d7',stroke:'#aaa293'}));
@@ -138,39 +143,15 @@ function draw(svg){
    svg.appendChild(mk('line',{x1:x,y1:302,x2:x,y2:322,stroke:'#667067','stroke-width':1.2}));
    if(i<14) svg.appendChild(mk('text',{x,y:340,'text-anchor':'middle','font-size':10,fill:'#667067'},String(i+1)));
  });
- svg.appendChild(mk('line',{x1:left,y1:377,x2:right,y2:377,stroke:'#344039','stroke-width':1.4}));
- svg.appendChild(mk('line',{x1:left,y1:369,x2:left,y2:385,stroke:'#344039','stroke-width':1.4}));
- svg.appendChild(mk('line',{x1:right,y1:369,x2:right,y2:385,stroke:'#344039','stroke-width':1.4}));
- svg.appendChild(mk('text',{x:490,y:367,'text-anchor':'middle','font-size':12,'font-weight':700,fill:'#18211a'},'Total span: '+fmt(span,true)));
- svg.appendChild(mk('text',{x:left+Math.max(34,best.leftCut*scale/2),y:105,'text-anchor':'middle','font-size':11,'font-weight':700,fill:'#18211a'},'Edge cut '+fmt(best.leftCut)));
-}
-
-function renderField(){
- if(!data)return;
- const marks=data.best.jointCenters.map(roundMark);
- if(!marks.length){E.fieldCounter.textContent='LAYOUT REFERENCE';E.fieldValue.textContent=fmt(data.span/2,true);E.fieldLabel.textContent=data.best.mode==='tile'?'TILE CENTERLINE':'GROUT CENTERLINE';return;}
- fieldIndex=Math.max(0,Math.min(fieldIndex,marks.length-1));
- E.fieldCounter.textContent='GROUT JOINT '+(fieldIndex+1)+' OF '+marks.length;
- E.fieldValue.textContent=fmt(marks[fieldIndex],true);
- E.fieldLabel.textContent='JOINT CENTER FROM STARTING EDGE';
-}
-function next(d){
- if(!data)return;const n=data.best.jointCenters.length;if(!n)return;
- fieldIndex=(fieldIndex+d+n)%n;renderField();
-}
-
-$('#calculate').addEventListener('click',calculate);
-[E.span,E.feet,E.inches,E.tile,E.grout,E.minCut,E.precision].forEach(x=>x&&['input','change'].forEach(ev=>x.addEventListener(ev,calculate)));
-E.mode.addEventListener('change',()=>{syncMode();calculate()});
-document.querySelectorAll('.seg').forEach(b=>b.addEventListener('click',()=>{
- document.querySelectorAll('.seg').forEach(x=>x.classList.remove('active'));b.classList.add('active');units=b.dataset.units;
- defaults();calculate();
-}));
+ dimH(svg,left,right,380,'TOTAL '+fmt(span,true),bottom);
+ const cutRight=left+best.leftCut*scale;dimH(svg,left,cutRight,101,'EDGE CUT '+fmt(best.leftCut,true),top);
+ const firstFull=best.intervals.find(x=>x.full);if(firstFull){const a=left+firstFull.start*scale,b=left+firstFull.end*scale;dimH(svg,a,b,82,'TILE '+fmt(tile,true),top)}
+ if(best.jointCenters.length>1){const a=left+best.jointCenters[0]*scale,b=left+best.jointCenters[1]*scale;dimH(svg,a,b,340,'MODULE '+fmt(tile+grout,true),bottom)}
 document.querySelectorAll('.print-button').forEach(b=>b.addEventListener('click',()=>window.print()));
 $('#openField').addEventListener('click',()=>{if(data){E.overlay.hidden=false;fieldIndex=0;renderField()}});
 $('#closeField').addEventListener('click',()=>E.overlay.hidden=true);
 $('#prevMark').addEventListener('click',()=>next(-1));$('#nextMark').addEventListener('click',()=>next(1));
 $('#mobileField')?.addEventListener('click',()=>$('#openField').click());$('#mobilePrint')?.addEventListener('click',()=>window.print());
 document.addEventListener('keydown',e=>{if(E.overlay.hidden)return;if(e.key==='Escape')E.overlay.hidden=true;if(e.key==='ArrowRight')next(1);if(e.key==='ArrowLeft')next(-1)});
-defaults();calculate();
+defaults();updateUnitLabels();calculate();
 })();
