@@ -4,8 +4,9 @@ const NS='http://www.w3.org/2000/svg';
 const E=(t,a={},txt='')=>{const n=document.createElementNS(NS,t);Object.entries(a).forEach(([k,v])=>n.setAttribute(k,v));if(txt)n.textContent=txt;return n};
 const L=(s,x1,y1,x2,y2,c='#344039',w=1.4)=>s.appendChild(E('line',{x1,y1,x2,y2,stroke:c,'stroke-width':w}));
 const T=(s,x,y,txt,size=13,weight=700,anchor='middle',fill='#18211a')=>s.appendChild(E('text',{x,y,'font-size':size,'font-weight':weight,'text-anchor':anchor,fill},txt));
-function dim(s,x1,x2,y,label){L(s,x1,y,x2,y);L(s,x1,y-7,x1,y+7);L(s,x2,y-7,x2,y+7);T(s,(x1+x2)/2,y-9,label,12,700)}
-function setup(s,title){s.innerHTML='';s.appendChild(E('rect',{x:0,y:0,width:980,height:410,rx:14,fill:'#fbfcfa'}));T(s,58,34,title,18,850,'start')}
+function arrowDefs(s){if(s.querySelector('#drawArrow'))return;const defs=E('defs'),m=E('marker',{id:'drawArrow',viewBox:'0 0 10 10',refX:5,refY:5,markerWidth:6,markerHeight:6,orient:'auto-start-reverse'});m.appendChild(E('path',{d:'M0 0L10 5L0 10z',fill:'#405047'}));defs.appendChild(m);s.appendChild(defs)}
+function dim(s,x1,x2,y,label){arrowDefs(s);L(s,x1,y-18,x1,y+5,'#829087',1);L(s,x2,y-18,x2,y+5,'#829087',1);s.appendChild(E('line',{x1,y1:y,x2,y2:y,stroke:'#405047','stroke-width':1.2,'marker-start':'url(#drawArrow)','marker-end':'url(#drawArrow)'}));const w=Math.max(54,label.length*6.1+12);s.appendChild(E('rect',{x:(x1+x2)/2-w/2,y:y-24,width:w,height:18,rx:4,fill:'#fbfcfa'}));T(s,(x1+x2)/2,y-10,label,11,750)}
+function setup(s,title){s.innerHTML='';s.appendChild(E('rect',{x:0,y:0,width:980,height:410,rx:14,fill:'#fbfcfa'}));arrowDefs(s);T(s,38,30,title+' blueprint',18,850,'start')}
 function nums(s,d,left,scale,y=338){d.centers.forEach((c,i)=>{const x=left+c*scale;L(s,x,y-31,x,y-10,'#176b43',1.5);T(s,x,y,String(i+1),11,500,'middle','#667067')})}
 function dims(s,d,left,right,scale,item){const f=v=>formatValue(v,d.units,d.precision);dim(s,left,right,386,`Total span: ${f(d.span)}`);if(d.centers.length){const c=d.centers[0];dim(s,left+(c-d.width/2)*scale,left+(c+d.width/2)*scale,68,`${item}: ${f(d.width)}`)}if(d.centers.length>1)dim(s,left+(d.centers[0]+d.width/2)*scale,left+(d.centers[1]-d.width/2)*scale,96,`Gap: ${f(d.gapRounded)}`)}
 export function draw(s,type,d){const left=72,right=908,scale=(right-left)/d.span;setup(s,{
