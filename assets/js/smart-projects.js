@@ -13,6 +13,8 @@ function unitWord(){return state.units==='metric'?'mm':'inches'}
 function setLabel(id,text){const el=$('#'+id);const lab=el?.closest('label');if(lab&&lab.firstChild)lab.firstChild.nodeValue=text+' '}
 function updateUnitLabels(){
   const u=unitWord();
+  const spanNames={fence:'Fence opening',balusters:'Clear opening',batten:'Wall width',wainscot:'Wall width',slats:'Wall width',pictures:'Wall width',lights:'Room length'};
+  if(spanNames[tool])setLabel('span',spanNames[tool]+' ('+u+')');
   const maps={
     fence:[['itemWidth','Picket width'],['maxGap','Maximum desired gap']],
     balusters:[['itemWidth','Baluster width'],['maxGap','Maximum clear gap']],
