@@ -214,7 +214,7 @@ button{font:inherit;cursor:pointer}.primary-action,.secondary-action{width:100%;
 /* Homepage project photo thumbnails */
 .tool-photo{
   height:160px;
-  background-image:url('/assets/images/home-tool-sprite.jpg');
+  background-image:url('/assets/images/home-tool-sprite.jpg?v=0.7.1');
   background-repeat:no-repeat;
   background-size:400% 300%;
   background-color:#ebe8df;
