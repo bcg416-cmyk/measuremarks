@@ -266,3 +266,86 @@ if ('serviceWorker' in navigator) {
     });
   });
 })();
+
+/* MeasureMarks blueprint viewer + Save/PDF actions */
+(() => {
+  const diagram = document.querySelector('#diagram');
+  if (!diagram) return;
+
+  const shell = diagram.closest('.diagram-shell');
+  if (!shell) return;
+
+  shell.classList.add('blueprint-preview');
+  shell.setAttribute('tabindex','0');
+  shell.setAttribute('role','button');
+  shell.setAttribute('aria-label','Open enlarged blueprint');
+
+  if (!shell.nextElementSibling?.classList.contains('blueprint-preview-help')) {
+    const help = document.createElement('div');
+    help.className = 'blueprint-preview-help';
+    help.innerHTML = '<button type="button" class="blueprint-expand-link">Tap blueprint to enlarge</button>';
+    shell.insertAdjacentElement('afterend', help);
+  }
+
+  const viewer = document.createElement('div');
+  viewer.className = 'blueprint-viewer';
+  viewer.hidden = true;
+  viewer.setAttribute('role','dialog');
+  viewer.setAttribute('aria-modal','true');
+  viewer.setAttribute('aria-label','Enlarged project blueprint');
+  viewer.innerHTML = '<div class="blueprint-viewer-toolbar"><strong>Blueprint</strong><div><button type="button" class="blueprint-pdf">Save / PDF</button><button type="button" class="blueprint-close" aria-label="Close enlarged blueprint">×</button></div></div><div class="blueprint-viewer-stage"></div><p class="blueprint-viewer-tip">Turn your phone sideways for the largest view. You can also scroll the drawing if needed.</p>';
+  document.body.appendChild(viewer);
+
+  const stage = viewer.querySelector('.blueprint-viewer-stage');
+  const close = viewer.querySelector('.blueprint-close');
+
+  function openViewer() {
+    const live = document.querySelector('#diagram');
+    if (!live) return;
+    stage.innerHTML = '';
+    const clone = live.cloneNode(true);
+    clone.removeAttribute('id');
+    clone.classList.add('blueprint-expanded-svg');
+    clone.setAttribute('aria-label','Enlarged project blueprint');
+    stage.appendChild(clone);
+    viewer.hidden = false;
+    document.body.classList.add('blueprint-viewer-open');
+    close.focus();
+  }
+  function closeViewer() {
+    viewer.hidden = true;
+    document.body.classList.remove('blueprint-viewer-open');
+    shell.focus();
+  }
+
+  shell.addEventListener('click', openViewer);
+  shell.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openViewer(); }
+  });
+  document.querySelector('.blueprint-expand-link')?.addEventListener('click', openViewer);
+  close.addEventListener('click', closeViewer);
+  viewer.addEventListener('click', e => { if (e.target === viewer) closeViewer(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !viewer.hidden) closeViewer(); });
+
+  viewer.querySelector('.blueprint-pdf').addEventListener('click', () => window.print());
+
+  const resultActions = document.querySelector('.result-head .inline-actions');
+  if (resultActions && !resultActions.querySelector('.pdf-button')) {
+    const pdf = document.createElement('button');
+    pdf.type = 'button';
+    pdf.className = 'small-btn pdf-button';
+    pdf.textContent = 'Save / PDF';
+    pdf.addEventListener('click', () => window.print());
+    resultActions.appendChild(pdf);
+  }
+
+  const mobileBar = document.querySelector('.mobile-bar');
+  if (mobileBar && !mobileBar.querySelector('.mobile-pdf')) {
+    const pdf = document.createElement('button');
+    pdf.type = 'button';
+    pdf.className = 'mobile-pdf';
+    pdf.textContent = 'Save / PDF';
+    pdf.addEventListener('click', () => window.print());
+    mobileBar.appendChild(pdf);
+  }
+})();
