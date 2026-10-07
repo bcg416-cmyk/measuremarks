@@ -25,7 +25,7 @@ button{font:inherit;cursor:pointer}.primary-action,.secondary-action{width:100%;
 
 
 /* V0.4 additions */
-.ad-slot{display:none;align-items:center;justify-content:center;text-align:center;border:1px dashed #c7cdc6;background:#f0f1ed;color:#899089;border-radius:12px;margin:18px auto;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;overflow:hidden}
+.ad-slot{display:none!important;align-items:center;justify-content:center;text-align:center;border:1px dashed #c7cdc6;background:#f0f1ed;color:#899089;border-radius:12px;margin:18px auto;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;overflow:hidden}
 .ad-slot::before{content:"Advertisement"}
 .ad-leaderboard{width:min(100%,728px);min-height:90px}
 .ad-rectangle{width:min(100%,336px);min-height:280px}
