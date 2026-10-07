@@ -1,4 +1,4 @@
-const CACHE='measuremarks-v05-smart-tile';
+const CACHE='measuremarks-v05-navfix';
 const CORE=['/','/index.html','/assets/css/site.css','/assets/js/common.js','/assets/js/drawings.js','/assets/js/app.js','/assets/js/site.js'];
 self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE))) });
 // e.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE))));
