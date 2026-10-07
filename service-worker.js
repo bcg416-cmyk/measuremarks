@@ -1,5 +1,5 @@
-const CACHE='measuremarks-v07-dev-1';
-const CORE=['/','/index.html','/assets/css/site.css?v=0.7-dev.1','/assets/js/site.js?v=0.7-dev.1'];
+const CACHE='measuremarks-v07-dev-2';
+const CORE=['/','/index.html','/assets/css/site.css?v=0.7-dev.2','/assets/js/site.js?v=0.7-dev.2'];
 self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)).catch(()=>{}))});
 self.addEventListener('activate',e=>{e.waitUntil(Promise.all([
   caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))),
