@@ -227,3 +227,42 @@ if ('serviceWorker' in navigator) {
 
   window.addEventListener('load', () => setTimeout(startFallbackIfNeeded, 250));
 })();
+
+
+/* Google Privacy & Messaging hooks. These become active when the Google CMP/API is loaded. */
+(() => {
+  function privacyFallback(message) {
+    let box = document.querySelector('.privacy-unavailable');
+    if (!box) {
+      box = document.createElement('div');
+      box.className = 'privacy-unavailable';
+      box.setAttribute('role','status');
+      const host = document.querySelector('.legal-content') || document.querySelector('main') || document.body;
+      host.appendChild(box);
+    }
+    box.textContent = message;
+    box.scrollIntoView({behavior:'smooth',block:'center'});
+  }
+
+  document.querySelectorAll('[data-privacy-action]').forEach(control => {
+    control.addEventListener('click', e => {
+      e.preventDefault();
+      const action = control.dataset.privacyAction;
+      if (action === 'eu') {
+        if (window.googlefc && typeof window.googlefc.showRevocationMessage === 'function') {
+          window.googlefc.showRevocationMessage();
+        } else {
+          privacyFallback('Privacy and cookie controls will be available here once Google consent messaging is active for MeasureMarks.');
+        }
+      }
+      if (action === 'us') {
+        const api = window.googlefc && window.googlefc.usstatesoptout;
+        if (api && typeof api.openConfirmationDialog === 'function') {
+          api.openConfirmationDialog(() => {});
+        } else {
+          privacyFallback('The U.S. state opt-out control will become active here once Google Privacy & messaging is published for MeasureMarks.');
+        }
+      }
+    });
+  });
+})();
