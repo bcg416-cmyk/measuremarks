@@ -22,7 +22,7 @@ function updateUnitLabels(){
     wainscot:[['itemWidth','Stile width'],['desired','Target panel opening']],
     slats:[['itemWidth','Slat width'],['desired','Target gap']],
     pictures:[['frameWidth','Frame width'],['frameHeight','Frame height'],['gap','Desired gap between frames'],['centerHeight','Frame center height above floor'],['hookOffset','Hook offset down from frame top']],
-    hardware:[['partWidth','Part width'],['partHeight','Part height'],['holeSpacing','Pull hole spacing'],['edgeOffset','Edge offset']],
+    hardware:[['partWidth','Part width'],['partHeight','Part height'],['holeSpacing','Pull hole spacing'],['edgeOffsetX','Horizontal edge offset'],['edgeOffsetY','Vertical edge offset']],
     lights:[['roomWidth','Room width'],['fixture','Fixture diameter'],['wallOffset','Fixed wall offset']]
   };
   (maps[tool]||[]).forEach(([id,t])=>setLabel(id,t+' ('+u+')'));
@@ -132,7 +132,7 @@ if(tool==='pictures'){
 
 // Cabinet hardware
 if(tool==='hardware'){
- function defaults(){if(state.units==='imperial'){$('#partWidth').value=18;$('#partHeight').value=28;$('#holeSpacing').value=5;$('#edgeOffset').value=2.5}else{$('#partWidth').value=457;$('#partHeight').value=711;$('#holeSpacing').value=128;$('#edgeOffset').value=64}$('#style').value='pull';$('#placement').value='upper-right';$('#orientation').value='vertical';updateUnitLabels()}
+ function defaults(){if(state.units==='imperial'){$('#partWidth').value=18;$('#partHeight').value=28;$('#holeSpacing').value=5;$('#edgeOffsetX').value=2.5;$('#edgeOffsetY').value=2.5}else{$('#partWidth').value=457;$('#partHeight').value=711;$('#holeSpacing').value=128;$('#edgeOffsetX').value=64;$('#edgeOffsetY').value=64}$('#style').value='pull';$('#placement').value='upper-right';$('#orientation').value='vertical';updateUnitLabels()}
  function draw(d,svg){
    baseSvg(svg,'Cabinet hardware drilling blueprint');
 
@@ -170,7 +170,7 @@ if(tool==='hardware'){
      x:500,y:35,'text-anchor':'middle','font-size':10,'font-weight':700,fill:'#667067'
    },'DRAWING PROPORTIONAL TO '+fmt(d.width,true)+' × '+fmt(d.height,true)));
  }
- function calc(){const width=Number($('#partWidth').value)||0,height=Number($('#partHeight').value)||0,style=$('#style').value,holeSpace=Number($('#holeSpacing').value)||0,place=$('#placement').value,orient=$('#orientation').value,off=Number($('#edgeOffset').value)||0;if(!(width>0)||!(height>0))return;let cx=width/2,cy=height/2;if(place.includes('right'))cx=width-off;if(place.includes('left'))cx=off;if(place.includes('upper'))cy=off;if(place.includes('lower'))cy=height-off;const holes=[];if(style==='knob')holes.push({x:cx,y:cy});else{const h=holeSpace/2;if(orient==='vertical')holes.push({x:cx,y:cy-h},{x:cx,y:cy+h});else holes.push({x:cx-h,y:cy},{x:cx+h,y:cy})}const list=holes.map((p,i)=>({label:style==='knob'?'Knob point':'Hole '+(i+1),main:'X '+fmt(roundMark(p.x),true),sub:'Y '+fmt(roundMark(p.y),true)}));state.data={field:list.map((m,i)=>({counter:(style==='knob'?'POINT ':'HOLE ')+(i+1)+' OF '+list.length,value:m.main,label:m.sub}))};setResults({title:'Cabinet hardware layout',note:'Coordinates are measured from the <strong>left edge</strong> and <strong>top edge</strong> of the part.',a:style==='knob'?'Single point':place,b:list[0]?.main+' / '+list[0]?.sub,c:list[1]?(list[1].main+' / '+list[1].sub):'N/A',marksTitle:'Drill coordinates',marks:list,dimensions:fmt(width,true)+' wide × '+fmt(height,true)+' high',layout:style==='knob'?'Single knob':'Two-hole pull · '+fmt(holeSpace,true)+' spacing'});draw({width,height,holes,holeSpace},$('#diagram'));draw({width,height,holes,holeSpace},$('#printDiagram'))}
+ function calc(){const width=Number($('#partWidth').value)||0,height=Number($('#partHeight').value)||0,style=$('#style').value,holeSpace=Number($('#holeSpacing').value)||0,place=$('#placement').value,orient=$('#orientation').value,offX=Number($('#edgeOffsetX').value)||0,offY=Number($('#edgeOffsetY').value)||0;if(!(width>0)||!(height>0))return;let cx=width/2,cy=height/2;if(place.includes('right'))cx=width-offX;if(place.includes('left'))cx=offX;if(place.includes('upper'))cy=offY;if(place.includes('lower'))cy=height-offY;const holes=[];if(style==='knob')holes.push({x:cx,y:cy});else{const h=holeSpace/2;if(orient==='vertical')holes.push({x:cx,y:cy-h},{x:cx,y:cy+h});else holes.push({x:cx-h,y:cy},{x:cx+h,y:cy})}const list=holes.map((p,i)=>({label:style==='knob'?'Knob point':'Hole '+(i+1),main:'X '+fmt(roundMark(p.x),true),sub:'Y '+fmt(roundMark(p.y),true)}));state.data={field:list.map((m,i)=>({counter:(style==='knob'?'POINT ':'HOLE ')+(i+1)+' OF '+list.length,value:m.main,label:m.sub}))};setResults({title:'Cabinet hardware layout',note:'Coordinates are measured from the <strong>left edge</strong> and <strong>top edge</strong> of the part.',a:style==='knob'?'Single point':place,b:list[0]?.main+' / '+list[0]?.sub,c:list[1]?(list[1].main+' / '+list[1].sub):'N/A',marksTitle:'Drill coordinates',marks:list,dimensions:fmt(width,true)+' wide × '+fmt(height,true)+' high',layout:style==='knob'?'Single knob':'Two-hole pull · '+fmt(holeSpace,true)+' spacing'});draw({width,height,holes,holeSpace},$('#diagram'));draw({width,height,holes,holeSpace},$('#printDiagram'))}
  commonEvents(calc,defaults);defaults();updateUnitLabels();calc()
 }
 
