@@ -132,3 +132,46 @@ button{font:inherit;cursor:pointer}.primary-action,.secondary-action{width:100%;
 .results[aria-live]{outline:none}
 @media(max-width:800px){.faq-grid,.home-proof-grid{grid-template-columns:1fr}.blueprint-demo{grid-template-columns:1fr}.blueprint-arrow{transform:rotate(90deg);text-align:center}.tool-guide{padding:24px 20px}}
 @media print{.tool-guide,.home-proof,.home-blueprint,.home-about{display:none!important}}
+
+
+/* V0.7.2 mobile calculator usability */
+@media(max-width:700px){
+  html,body{max-width:100%;overflow-x:hidden}
+  .wrap{width:min(100% - 20px,1180px)}
+  .app-grid{display:block;width:100%;max-width:100%;min-width:0;padding-bottom:18px}
+  .app-grid>*{min-width:0;max-width:100%}
+  .controls,.results{position:static;width:100%;max-width:100%;min-width:0;padding:16px;margin:0 0 14px}
+  .controls *,.results *{min-width:0;max-width:100%}
+  .controls label{width:100%;margin:12px 0}
+  .controls input,.controls select{width:100%;max-width:100%;font-size:16px;padding:11px 12px}
+  .controls button,.results button{min-height:44px}
+  .span-inputs{grid-template-columns:1fr;gap:10px}
+  .span-inputs label{width:100%}
+  .segmented{width:100%;grid-template-columns:1fr 1fr}
+  .seg{min-width:0;padding:10px 6px}
+  .result-head{display:block}
+  .inline-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+  .inline-actions .small-btn{width:100%;padding:10px 8px}
+  .stats{grid-template-columns:1fr 1fr;gap:8px;margin:14px 0}
+  .stat{padding:11px}
+  .stat strong{font-size:1rem;overflow-wrap:anywhere}
+  .marks-head{display:block;margin-top:18px}
+  .marks-head span{display:block;margin-top:4px}
+  .marks{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+  .mark{padding:9px;min-width:0}
+  .mark strong{display:block;overflow-wrap:anywhere}
+  .diagram-shell{width:100%;max-width:100%;overflow:hidden;padding:6px}
+  .project-diagram{display:block;width:100%;max-width:100%;min-width:0!important;height:auto}
+  .results .project-diagram{min-height:0}
+  .field-explainer{padding:13px}
+  .field-steps{display:grid;grid-template-columns:1fr 1fr}
+  .mobile-bar{grid-template-columns:1.35fr 1fr;padding:8px 10px}
+}
+@media(max-width:420px){
+  .wrap{width:min(100% - 14px,1180px)}
+  .controls,.results{padding:13px}
+  .stats{grid-template-columns:1fr}
+  .marks{grid-template-columns:1fr 1fr}
+  .inline-actions{grid-template-columns:1fr}
+  .project-diagram text{font-weight:700}
+}
