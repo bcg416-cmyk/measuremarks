@@ -10,7 +10,7 @@ function frac(v,d=16){const s=v<0?'-':'';v=Math.abs(v);let w=Math.floor(v+1e-9),
 function fmt(v,long=false){if(units==='metric')return(Math.round(v*10)/10).toLocaleString()+' mm';const d=Number(E.precision.value||16);if(!long||Math.abs(v)<12)return frac(v,d);const sign=v<0?'-':'';v=Math.abs(v);const ft=Math.floor(v/12),inch=v-ft*12;return sign+ft+"' "+frac(inch,d)}
 function roundMark(v){const d=Number(E.precision.value||16);return units==='metric'?Math.round(v*10)/10:Math.round(v*d)/d}
 function setLabel(el,text){const l=el?.closest('label');if(l?.firstChild)l.firstChild.nodeValue=text+' '}
-function updateUnitLabels(){const u=units==='metric'?'mm':'inches';setLabel(E.tile,'Tile width ('+u+')');setLabel(E.grout,'Grout joint width ('+u+')');setLabel(E.minCut,'Preferred minimum edge cut ('+u+')')}
+function updateUnitLabels(){const u=units==='metric'?'mm':'inches';setLabel(E.span,'Total layout span ('+u+')');setLabel(E.tile,'Tile width ('+u+')');setLabel(E.grout,'Grout joint width ('+u+')');setLabel(E.minCut,'Preferred minimum edge cut ('+u+')')}
 function getSpan(){if(units==='imperial'&&E.mode.value==='feet')return(Number(E.feet.value)||0)*12+(Number(E.inches.value)||0);return Number(E.span.value)||0}
 function setSpan(v){E.span.value=v;if(units==='imperial'){E.feet.value=Math.floor(v/12);E.inches.value=v%12}}
 function syncMode(){const feetMode=units==='imperial'&&E.mode.value==='feet';E.decimalWrap.classList.toggle('hidden',feetMode);E.feetWrap.classList.toggle('hidden',!feetMode);E.mode.disabled=units!=='imperial'}
