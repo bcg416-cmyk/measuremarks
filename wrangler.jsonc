@@ -6,5 +6,9 @@
     "directory": "./"
   },
 
-  "previews": {}
+  "previews": {},
+
+  "env": {
+    "dev": {}
+  }
 }
