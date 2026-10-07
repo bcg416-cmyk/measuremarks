@@ -17,6 +17,8 @@ wainscot:{name:'Wainscoting',type:'wainscot',item:'Stile',span:144,width:2.5,cou
 const $=s=>document.querySelector(s), E={span:$('#span'),spanFeet:$('#spanFeet'),spanInches:$('#spanInches'),spanMode:$('#spanMode'),spanDecimalWrap:$('#spanDecimalWrap'),spanFeetWrap:$('#spanFeetWrap'),width:$('#itemWidth'),count:$('#count'),edge:$('#edgeMode'),precision:$('#precision'),exact:$('#exactGap'),gap:$('#roundedGap'),center:$('#centerSpacing'),title:$('#resultTitle'),desc:$('#toolDescription'),marks:$('#marks'),marksTitle:$('#marksTitle'),precLabel:$('#precisionLabel'),diagram:$('#diagram'),printDiagram:$('#printDiagram'),planProject:$('#planProject'),planDimensions:$('#planDimensions'),planGap:$('#planGap'),printMarks:$('#printMarks'),overlay:$('#fieldOverlay'),fieldCounter:$('#fieldCounter'),fieldValue:$('#fieldValue'),fieldLabel:$('#fieldLabel')};
 let units='imperial',data=null,fieldIndex=0;
 const fmt=(v,x=false)=>formatValue(v,units,Number(E.precision.value),x);
+function setLabel(el,text){const l=el?.closest('label');if(l?.firstChild)l.firstChild.nodeValue=text+' '}
+function updateUnitLabels(){setLabel(E.width,'Item width ('+(units==='metric'?'mm':'inches')+')')}
 function preset(){
   if(units==='imperial'){
     E.span.value=C.span;E.width.value=C.width;
@@ -24,7 +26,7 @@ function preset(){
   }else{
     E.span.value=Math.round(C.span*25.4);E.width.value=Math.round(C.width*25.4)
   }
-  E.count.value=C.count
+  E.count.value=C.count;updateUnitLabels()
 }
 function getSpan(){
   if(units==='imperial'&&E.spanMode&&E.spanMode.value==='feet'){
@@ -43,8 +45,8 @@ function calc(){const span=getSpan(),width=+E.width.value,count=Math.max(2,Math.
 function renderField(){if(!data)return;E.fieldCounter.textContent=`MARK ${fieldIndex+1} OF ${data.marks.length}`;E.fieldValue.textContent=fmt(data.marks[fieldIndex]);E.fieldLabel.textContent=`${C.item.toUpperCase()} CENTER`}
 [E.span,E.spanFeet,E.spanInches,E.width,E.count,E.edge,E.precision].filter(Boolean).forEach(x=>{x.addEventListener('input',calc);x.addEventListener('change',calc)});
 if(E.spanMode)E.spanMode.addEventListener('change',()=>{syncSpanMode();calc()});
-document.querySelectorAll('.seg').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.seg').forEach(x=>x.classList.remove('active'));b.classList.add('active');units=b.dataset.units;E.span.step=units==='metric'?1:.0625;E.width.step=units==='metric'?1:.0625;preset();syncSpanMode();calc()}));
-$('#calculate').addEventListener('click',calc);document.querySelectorAll('.print-button').forEach(b=>b.addEventListener('click',()=>window.print()));$('#openField').addEventListener('click',()=>{E.overlay.hidden=false;fieldIndex=0;renderField()});$('#closeField').addEventListener('click',()=>E.overlay.hidden=true);$('#prevMark').addEventListener('click',()=>{fieldIndex=(fieldIndex-1+data.marks.length)%data.marks.length;renderField()});$('#nextMark').addEventListener('click',()=>{fieldIndex=(fieldIndex+1)%data.marks.length;renderField()});document.addEventListener('keydown',e=>{if(E.overlay.hidden||!data)return;if(e.key==='Escape')E.overlay.hidden=true;if(e.key==='ArrowRight'){fieldIndex=(fieldIndex+1)%data.marks.length;renderField()}if(e.key==='ArrowLeft'){fieldIndex=(fieldIndex-1+data.marks.length)%data.marks.length;renderField()}});preset();syncSpanMode();calc();
+document.querySelectorAll('.seg').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.seg').forEach(x=>x.classList.remove('active'));b.classList.add('active');units=b.dataset.units;E.span.step=units==='metric'?1:.0625;E.width.step=units==='metric'?1:.0625;preset();syncSpanMode();updateUnitLabels();calc()}));
+$('#calculate').addEventListener('click',calc);document.querySelectorAll('.print-button').forEach(b=>b.addEventListener('click',()=>window.print()));$('#openField').addEventListener('click',()=>{E.overlay.hidden=false;fieldIndex=0;renderField()});$('#closeField').addEventListener('click',()=>E.overlay.hidden=true);$('#prevMark').addEventListener('click',()=>{fieldIndex=(fieldIndex-1+data.marks.length)%data.marks.length;renderField()});$('#nextMark').addEventListener('click',()=>{fieldIndex=(fieldIndex+1)%data.marks.length;renderField()});document.addEventListener('keydown',e=>{if(E.overlay.hidden||!data)return;if(e.key==='Escape')E.overlay.hidden=true;if(e.key==='ArrowRight'){fieldIndex=(fieldIndex+1)%data.marks.length;renderField()}if(e.key==='ArrowLeft'){fieldIndex=(fieldIndex-1+data.marks.length)%data.marks.length;renderField()}});preset();syncSpanMode();updateUnitLabels();calc();
 
 const mobileField=document.querySelector('#mobileField');
 const mobilePrint=document.querySelector('#mobilePrint');
