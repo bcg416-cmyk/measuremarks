@@ -59,3 +59,28 @@ button{font:inherit;cursor:pointer}.primary-action,.secondary-action{width:100%;
 @media print{
   .ad-slot,.ad-note,.mobile-bar{display:none!important}
 }
+
+
+/* V0.6 blueprint / custom-layout additions */
+.custom-frame-head{font-size:.82rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;margin:18px 0 4px;color:var(--accent)}
+.custom-frame-row{border:1px solid var(--line);border-radius:12px;padding:11px;margin:9px 0;background:#fafbf9}
+.custom-frame-row>strong{font-size:.82rem}
+.custom-frame-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:7px}
+.custom-frame-grid label{margin:0;font-size:.74rem;color:var(--muted)}
+.custom-frame-grid input{padding:9px 8px;margin-top:4px}
+.diagram-shell{background:#fff}
+.print-plan .diagram-shell{border-color:#aeb8b1}
+@media(max-width:600px){.custom-frame-grid{grid-template-columns:1fr}}
+@media print{
+  @page{size:landscape;margin:.35in}
+  .print-plan{font-size:10pt}
+  .print-head{padding-bottom:8px;border-bottom:2px solid #26342b}
+  .print-head h2{font-size:20pt}
+  .print-grid{grid-template-columns:1fr 1.5fr 1.5fr;gap:8px;margin:10px 0}
+  .print-box{padding:9px;border-color:#9eaaa1}
+  .print-plan .diagram-shell{padding:4px;border:2px solid #405047;border-radius:4px}
+  .print-plan .project-diagram{width:100%;height:auto;max-height:5.7in}
+  .print-marks{margin-top:10px;border-top:1px solid #9eaaa1;padding-top:7px}
+  .print-marks h3{margin:0 0 5px}
+  .print-marks ol{columns:3;font-size:8.5pt;margin-top:4px}
+}
