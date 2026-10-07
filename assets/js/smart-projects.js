@@ -134,11 +134,41 @@ if(tool==='pictures'){
 if(tool==='hardware'){
  function defaults(){if(state.units==='imperial'){$('#partWidth').value=18;$('#partHeight').value=28;$('#holeSpacing').value=5;$('#edgeOffset').value=2.5}else{$('#partWidth').value=457;$('#partHeight').value=711;$('#holeSpacing').value=128;$('#edgeOffset').value=64}$('#style').value='pull';$('#placement').value='upper-right';$('#orientation').value='vertical';updateUnitLabels()}
  function draw(d,svg){
-   baseSvg(svg,'Cabinet hardware drilling blueprint');const left=330,top=55,w=360,h=290;
+   baseSvg(svg,'Cabinet hardware drilling blueprint');
+
+   // Preserve the real door/drawer aspect ratio while fitting it into the drawing area.
+   const maxW=610,maxH=270;
+   const scale=Math.min(maxW/d.width,maxH/d.height);
+   const w=Math.max(70,d.width*scale),h=Math.max(55,d.height*scale);
+   const left=500-w/2,top=190-h/2;
+
    svg.appendChild(svgEl('rect',{x:left,y:top,width:w,height:h,rx:5,fill:'#f4f0e8',stroke:'#a99d89','stroke-width':2}));
-   d.holes.forEach((p,i)=>{const x=left+p.x/d.width*w,y=top+p.y/d.height*h;svg.appendChild(svgEl('circle',{cx:x,cy:y,r:7,fill:'#176b43'}));svg.appendChild(svgEl('text',{x:x+10,y:y-8,'font-size':10,'font-weight':800,fill:'#176b43'},'H'+(i+1)));svg.appendChild(svgEl('text',{x:x+10,y:y+8,'font-size':9,fill:'#405047'},'X '+fmt(p.x,true)+' / Y '+fmt(p.y,true)))});
-   dimH(svg,left,left+w,382,'WIDTH '+fmt(d.width,true),top+h,top+h);dimV(svg,top,top+h,292,'HEIGHT '+fmt(d.height,true),left,left);
-   if(d.holes.length===2){const a=d.holes[0],b=d.holes[1],x1=left+a.x/d.width*w,y1=top+a.y/d.height*h,x2=left+b.x/d.width*w,y2=top+b.y/d.height*h;if(Math.abs(x2-x1)>10)dimH(svg,x1,x2,82,'HOLES '+fmt(d.holeSpace,true),y1,y2);else dimV(svg,y1,y2,735,'HOLES '+fmt(d.holeSpace,true),x1,x2)}
+
+   // Add a subtle center reference so unusual drawer/door proportions are easy to read.
+   svg.appendChild(svgEl('line',{x1:left+w/2,y1:top,x2:left+w/2,y2:top+h,stroke:'#c7cfc9','stroke-width':1,'stroke-dasharray':'5 5'}));
+   svg.appendChild(svgEl('line',{x1:left,y1:top+h/2,x2:left+w,y2:top+h/2,stroke:'#c7cfc9','stroke-width':1,'stroke-dasharray':'5 5'}));
+
+   d.holes.forEach((p,i)=>{
+     const x=left+(p.x/d.width)*w,y=top+(p.y/d.height)*h;
+     svg.appendChild(svgEl('circle',{cx:x,cy:y,r:7,fill:'#176b43'}));
+     svg.appendChild(svgEl('text',{x:x+10,y:y-8,'font-size':10,'font-weight':800,fill:'#176b43'},'H'+(i+1)));
+     svg.appendChild(svgEl('text',{x:x+10,y:y+8,'font-size':9,fill:'#405047'},'X '+fmt(p.x,true)+' / Y '+fmt(p.y,true)));
+   });
+
+   dimH(svg,left,left+w,382,'WIDTH '+fmt(d.width,true),top+h,top+h);
+   dimV(svg,top,top+h,left-32,'HEIGHT '+fmt(d.height,true),left,left);
+
+   if(d.holes.length===2){
+     const a=d.holes[0],b=d.holes[1],
+       x1=left+(a.x/d.width)*w,y1=top+(a.y/d.height)*h,
+       x2=left+(b.x/d.width)*w,y2=top+(b.y/d.height)*h;
+     if(Math.abs(x2-x1)>10) dimH(svg,x1,x2,Math.max(54,top-22),'HOLES '+fmt(d.holeSpace,true),y1,y2);
+     else dimV(svg,y1,y2,Math.min(946,left+w+32),'HOLES '+fmt(d.holeSpace,true),x1,x2);
+   }
+
+   svg.appendChild(svgEl('text',{
+     x:500,y:35,'text-anchor':'middle','font-size':10,'font-weight':700,fill:'#667067'
+   },'DRAWING PROPORTIONAL TO '+fmt(d.width,true)+' × '+fmt(d.height,true)));
  }
  function calc(){const width=Number($('#partWidth').value)||0,height=Number($('#partHeight').value)||0,style=$('#style').value,holeSpace=Number($('#holeSpacing').value)||0,place=$('#placement').value,orient=$('#orientation').value,off=Number($('#edgeOffset').value)||0;if(!(width>0)||!(height>0))return;let cx=width/2,cy=height/2;if(place.includes('right'))cx=width-off;if(place.includes('left'))cx=off;if(place.includes('upper'))cy=off;if(place.includes('lower'))cy=height-off;const holes=[];if(style==='knob')holes.push({x:cx,y:cy});else{const h=holeSpace/2;if(orient==='vertical')holes.push({x:cx,y:cy-h},{x:cx,y:cy+h});else holes.push({x:cx-h,y:cy},{x:cx+h,y:cy})}const list=holes.map((p,i)=>({label:style==='knob'?'Knob point':'Hole '+(i+1),main:'X '+fmt(roundMark(p.x),true),sub:'Y '+fmt(roundMark(p.y),true)}));state.data={field:list.map((m,i)=>({counter:(style==='knob'?'POINT ':'HOLE ')+(i+1)+' OF '+list.length,value:m.main,label:m.sub}))};setResults({title:'Cabinet hardware layout',note:'Coordinates are measured from the <strong>left edge</strong> and <strong>top edge</strong> of the part.',a:style==='knob'?'Single point':place,b:list[0]?.main+' / '+list[0]?.sub,c:list[1]?(list[1].main+' / '+list[1].sub):'N/A',marksTitle:'Drill coordinates',marks:list,dimensions:fmt(width,true)+' wide × '+fmt(height,true)+' high',layout:style==='knob'?'Single knob':'Two-hole pull · '+fmt(holeSpace,true)+' spacing'});draw({width,height,holes,holeSpace},$('#diagram'));draw({width,height,holes,holeSpace},$('#printDiagram'))}
  commonEvents(calc,defaults);defaults();updateUnitLabels();calc()
