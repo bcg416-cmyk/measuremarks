@@ -209,3 +209,28 @@ button{font:inherit;cursor:pointer}.primary-action,.secondary-action{width:100%;
 @media print{
   .blueprint-preview-help,.blueprint-viewer,.pdf-button{display:none!important}
 }
+
+
+/* Homepage project photo thumbnails */
+.tool-photo{
+  height:160px;
+  background-image:url('/assets/images/home-tool-sprite.jpg');
+  background-repeat:no-repeat;
+  background-size:400% 300%;
+  background-color:#ebe8df;
+  transition:transform .18s ease,filter .18s ease;
+}
+.tool-card:hover .tool-photo{transform:translateY(-1px);filter:saturate(1.04) contrast(1.02)}
+.photo-equal{background-position:0% 0%}
+.photo-pickets{background-position:33.333% 0%}
+.photo-posts{background-position:66.667% 0%}
+.photo-balusters{background-position:100% 0%}
+.photo-batten{background-position:0% 50%}
+.photo-wainscot{background-position:33.333% 50%}
+.photo-slats{background-position:66.667% 50%}
+.photo-tile{background-position:100% 50%}
+.photo-pictures{background-position:0% 100%}
+.photo-hardware{background-position:33.333% 100%}
+.photo-lights{background-position:66.667% 100%}
+.photo-deck{background-position:100% 100%}
+@media(max-width:600px){.tool-photo{height:150px}}
