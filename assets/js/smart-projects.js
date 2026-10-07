@@ -44,6 +44,14 @@ function baseSvg(svg,title){if(!svg)return;svg.innerHTML='';svg.appendChild(svgE
 function dimText(svg,x,y,label){const w=Math.max(54,label.length*6.2+12);svg.appendChild(svgEl('rect',{x:x-w/2,y:y-13,width:w,height:18,rx:4,fill:'#fbfcfa',opacity:.96}));svg.appendChild(svgEl('text',{x,y,'text-anchor':'middle','font-size':11,'font-weight':750,fill:'#26342b'},label))}
 function dimH(svg,x1,x2,y,label,ey1,ey2){if(Math.abs(x2-x1)<5)return;svg.appendChild(svgEl('line',{x1,y1:ey1??y-15,x2:x1,y2:y+5,stroke:'#829087','stroke-width':1}));svg.appendChild(svgEl('line',{x1:x2,y1:ey2??y-15,x2:x2,y2:y+5,stroke:'#829087','stroke-width':1}));svg.appendChild(svgEl('line',{x1,y1:y,x2,y2:y,stroke:'#405047','stroke-width':1.2,'marker-start':'url(#dimArrow)','marker-end':'url(#dimArrow)'}));dimText(svg,(x1+x2)/2,y-5,label)}
 function dimV(svg,y1,y2,x,label,ex1,ex2){if(Math.abs(y2-y1)<5)return;svg.appendChild(svgEl('line',{x1:ex1??x+15,y1,x2:x-5,y2:y1,stroke:'#829087','stroke-width':1}));svg.appendChild(svgEl('line',{x1:ex2??x+15,y1:y2,x2:x-5,y2:y2,stroke:'#829087','stroke-width':1}));svg.appendChild(svgEl('line',{x1:x,y1,x2:x,y2,stroke:'#405047','stroke-width':1.2,'marker-start':'url(#dimArrow)','marker-end':'url(#dimArrow)'}));const mid=(y1+y2)/2;const t=svgEl('text',{x:x-9,y:mid,'text-anchor':'middle','font-size':11,'font-weight':750,fill:'#26342b',transform:'rotate(-90 '+(x-9)+' '+mid+')'},label);svg.appendChild(t)}
+function clearSmartResult(message){
+  state.data=null;
+  const note=$('#resultNote');if(note)note.textContent=message;
+  ['#statA','#statB','#statC'].forEach(s=>{const el=$(s);if(el)el.textContent='—'});
+  const marks=$('#marks');if(marks)marks.innerHTML='';
+  const pm=$('#printMarks');if(pm)pm.innerHTML='';
+  ['#diagram','#printDiagram'].forEach(s=>{const svg=$(s);if(svg)svg.innerHTML=''});
+}
 function setResults({title,note,a,b,c,marksTitle,marks,dimensions,layout}){$('#resultTitle').textContent=title;$('#resultNote').innerHTML=note;$('#statA').textContent=a;$('#statB').textContent=b;$('#statC').textContent=c;$('#marksTitle').textContent=marksTitle;$('#marks').innerHTML=marks.map(m=>'<div class="mark"><small>'+m.label+'</small><strong>'+m.main+'</strong>'+(m.sub?'<small>'+m.sub+'</small>':'')+'</div>').join('');$('#planDimensions').textContent=dimensions;$('#planLayout').textContent=layout;$('#printMarks').innerHTML=marks.map(m=>'<li>'+m.label+': <strong>'+m.main+'</strong>'+(m.sub?' · '+m.sub:'')+'</li>').join('')}
 function renderField(){if(!state.data?.field?.length)return;const f=state.data.field[state.fieldIndex];$('#fieldCounter').textContent=f.counter||('MARK '+(state.fieldIndex+1)+' OF '+state.data.field.length);$('#fieldValue').textContent=f.value;$('#fieldLabel').textContent=f.label}
 function stepField(d){if(!state.data?.field?.length)return;state.fieldIndex=(state.fieldIndex+d+state.data.field.length)%state.data.field.length;renderField()}
@@ -147,14 +155,14 @@ if(tool==='hardware'){
  }
  function calc(){
    const width=Number($('#partWidth').value)||0,height=Number($('#partHeight').value)||0,style=$('#style').value,holeSpace=Number($('#holeSpacing').value)||0,place=$('#placement').value,orient=$('#orientation').value,offX=Number($('#edgeOffsetX').value)||0,offY=Number($('#edgeOffsetY').value)||0;
-   if(!(width>0)||!(height>0)){state.data=null;$('#resultNote').textContent='Enter a part width and height greater than zero.';return}
-   if(offX<0||offY<0||offX>width||offY>height){state.data=null;$('#resultNote').textContent='Edge offsets must stay within the cabinet part.';return}
-   if(style==='pull'&&!(holeSpace>0)){state.data=null;$('#resultNote').textContent='Enter a pull hole spacing greater than zero.';return}
+   if(!(width>0)||!(height>0)){clearSmartResult('Enter a part width and height greater than zero.');return}
+   if(offX<0||offY<0||offX>width||offY>height){clearSmartResult('Edge offsets must stay within the cabinet part.');return}
+   if(style==='pull'&&!(holeSpace>0)){clearSmartResult('Enter a pull hole spacing greater than zero.');return}
    let cx=width/2,cy=height/2;
    if(place.includes('right'))cx=width-offX;if(place.includes('left'))cx=offX;if(place.includes('upper'))cy=offY;if(place.includes('lower'))cy=height-offY;
    const holes=[];if(style==='knob')holes.push({x:cx,y:cy});else{const h=holeSpace/2;if(orient==='vertical')holes.push({x:cx,y:cy-h},{x:cx,y:cy+h});else holes.push({x:cx-h,y:cy},{x:cx+h,y:cy})}
    const invalid=holes.some(p=>p.x<0||p.x>width||p.y<0||p.y>height);
-   if(invalid){state.data=null;$('#resultNote').innerHTML='<strong>That hardware position does not fit on the cabinet part.</strong> Reduce an edge offset or the pull hole spacing.';$('#marks').innerHTML='';return}
+   if(invalid){clearSmartResult('That hardware position does not fit on the cabinet part. Reduce an edge offset or the pull hole spacing.');return}
    const list=holes.map((p,i)=>({label:style==='knob'?'Knob point':'Hole '+(i+1),main:'X '+fmt(roundMark(p.x),true),sub:'Y '+fmt(roundMark(p.y),true)}));
    state.data={field:list.map((m,i)=>({counter:(style==='knob'?'POINT ':'HOLE ')+(i+1)+' OF '+list.length,value:m.main,label:m.sub}))};
    setResults({title:'Cabinet hardware layout',note:'Coordinates are measured from the <strong>left edge</strong> and <strong>top edge</strong> of the part.',a:style==='knob'?'Single point':place,b:list[0]?.main+' / '+list[0]?.sub,c:list[1]?(list[1].main+' / '+list[1].sub):'N/A',marksTitle:'Drill coordinates',marks:list,dimensions:fmt(width,true)+' wide × '+fmt(height,true)+' high',layout:style==='knob'?'Single knob':'Two-hole pull · '+fmt(holeSpace,true)+' spacing'});
@@ -180,11 +188,11 @@ if(tool==='lights'){
  }
  function calc(){
    syncOffset();const length=span(),width=Number($('#roomWidth').value)||0,fixture=Number($('#fixture').value)||0,rows=Math.max(1,Math.floor(Number($('#rows').value)||1)),cols=Math.max(1,Math.floor(Number($('#cols').value)||1)),mode=$('#edgeMode').value,fixed=Number($('#wallOffset').value)||0;
-   if(!(length>0)||!(width>0)||!(fixture>0)){state.data=null;$('#resultNote').textContent='Enter valid room dimensions and a fixture diameter greater than zero.';return}
-   if(fixture>Math.min(length,width)){state.data=null;$('#resultNote').textContent='Fixture diameter cannot exceed the room dimensions.';return}
+   if(!(length>0)||!(width>0)||!(fixture>0)){clearSmartResult('Enter valid room dimensions and a fixture diameter greater than zero.');return}
+   if(fixture>Math.min(length,width)){clearSmartResult('Fixture diameter cannot exceed the room dimensions.');return}
    let xMargin,yMargin,xStep,yStep;
    if(mode==='balanced'){xMargin=length/(cols+1);xStep=xMargin;yMargin=width/(rows+1);yStep=yMargin}else{xMargin=fixed;yMargin=fixed;xStep=cols>1?(length-2*xMargin)/(cols-1):0;yStep=rows>1?(width-2*yMargin)/(rows-1):0}
-   if(xStep<0||yStep<0){state.data=null;$('#resultNote').textContent='The fixed wall offset is too large for the selected grid.';return}
+   if(xStep<0||yStep<0){clearSmartResult('The fixed wall offset is too large for the selected grid.');return}
    const points=[];for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)points.push({x:cols===1?length/2:xMargin+c*xStep,y:rows===1?width/2:yMargin+r*yStep});
    const list=points.map((p,i)=>({label:'Light '+(i+1),main:'X '+fmt(roundMark(p.x),true),sub:'Y '+fmt(roundMark(p.y),true)}));
    state.data={field:list.map((m,i)=>({counter:'LIGHT '+(i+1)+' OF '+list.length,value:m.main,label:m.sub}))};
