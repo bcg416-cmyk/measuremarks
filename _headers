@@ -2,3 +2,13 @@
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=()
+  Cache-Control: no-cache, must-revalidate
+
+https://measuremarks-dev.bcg416.workers.dev/*
+  X-Robots-Tag: noindex, nofollow
+
+https://dev.measuremarks.com/*
+  X-Robots-Tag: noindex, nofollow
+
+/service-worker.js
+  Cache-Control: no-store, max-age=0
