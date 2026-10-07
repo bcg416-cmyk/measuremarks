@@ -1,39 +1,39 @@
 <!doctype html><html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Fence Post Spacing Calculator | MeasureMarks</title><meta name="description" content="Lay out fence or deck posts across a long run and get center marks for every post.">
+<title>Fence Post Spacing Calculator | MeasureMarks</title>
+<meta name="description" content="Enter a fence run and maximum allowed post spacing. MeasureMarks calculates the required number of posts, actual spacing, and every post-center mark.">
 <link rel="manifest" href="../../manifest.webmanifest"><meta name="theme-color" content="#176b43">
-<link rel="stylesheet" href="../../assets/css/site.css"></head><body data-tool="posts">
+<link rel="stylesheet" href="../../assets/css/site.css"></head><body data-tool="smart-posts">
 <header class="site-header"><div class="wrap nav"><a class="brand" href="../../index.html">Measure<span>Marks</span></a><div class="tagline">Measure. Mark. Build.</div><div class="nav-links"><a href="../../index.html#tools">All Tools</a><a href="#printable-plan">Print Plan</a></div></div></header>
 <main>
-<section class="hero compact wrap"><div class="eyebrow">MEASUREMARKS TOOL</div><h1>Fence Post Spacing Calculator</h1><p class="lede">Lay out fence or deck posts across a long run and get center marks for every post.</p></section>
-<div class="wrap ad-slot ad-leaderboard ad-desktop" aria-label="Advertisement space"></div>
-<div class="wrap ad-slot ad-mobile" aria-label="Mobile advertisement space"></div>
+<section class="hero compact wrap"><div class="eyebrow">PROJECT-SMART TOOL</div><h1>Fence Post Spacing Calculator</h1><p class="lede">Tell us the fence run and the maximum spacing you will allow. MeasureMarks determines how many posts you need and exactly where every post center goes.</p></section>
+<div class="wrap ad-slot ad-leaderboard ad-desktop" aria-label="Advertisement space"></div><div class="wrap ad-slot ad-mobile" aria-label="Mobile advertisement space"></div>
 <section class="wrap app-grid">
 <aside class="card controls">
-<h2>Project setup</h2><p class="help">Enter the actual span you need to fill. MeasureMarks will calculate the spacing and every center mark.</p>
+<h2>Fence setup</h2><p class="help">Example: for a 47′ 8″ fence with posts no more than 8′ apart, enter the run and 8′ maximum. You do not have to guess the number of posts.</p>
 <div class="segmented"><button class="seg active" data-units="imperial">Imperial</button><button class="seg" data-units="metric">Metric</button></div>
-<div class="measure-mode"><span class="measure-mode-label">Large-project input</span><select id="spanMode"><option value="inches">Enter span in inches</option><option value="feet">Enter span in feet + inches</option></select></div>
-<div id="spanDecimalWrap"><label>Total span<input id="span" type="number" min="0" step=".0625"></label></div>
-<div id="spanFeetWrap" class="hidden"><div class="span-inputs"><label>Feet<input id="spanFeet" type="number" min="0" step="1"></label><label>Inches<input id="spanInches" type="number" min="0" step=".0625"></label></div><small class="help">Example: 12 ft + 7.375 in = 12' 7 3/8"</small></div>
-<label>Post width<input id="itemWidth" type="number" min="0" step=".0625"></label>
-<label>Number of posts<input id="count" type="number" min="2" step="1"></label>
-<label>Edge layout<select id="edgeMode"><option value="equal">Equal outside gaps</option><option value="flush">First and last item flush to edges</option></select></label>
+<div class="measure-mode"><span class="measure-mode-label">Run input</span><select id="spanMode"><option value="feet">Feet + inches</option><option value="inches">Decimal inches</option></select></div>
+<div id="spanDecimalWrap" class="hidden"><label>Total fence run<input id="span" type="number" min="0" step=".0625"></label></div>
+<div id="spanFeetWrap"><div class="span-inputs"><label>Feet<input id="spanFeet" type="number" min="0" step="1"></label><label>Inches<input id="spanInches" type="number" min="0" step=".0625"></label></div><small class="help">Measure the finished fence run from the outside face of the first end post to the outside face of the last.</small></div>
+<label>Post width<input id="postWidth" type="number" min="0" step=".0625"></label>
+<label>Maximum center-to-center spacing<input id="maxSpacing" type="number" min="0" step=".0625"></label>
+<label>End-post layout<select id="endMode"><option value="flush">End posts flush with both ends</option><option value="centers">Run is measured center-to-center between end posts</option></select></label>
 <label>Tape precision<select id="precision"><option value="8">Nearest 1/8"</option><option value="16" selected>Nearest 1/16"</option><option value="32">Nearest 1/32"</option></select></label>
-<button id="calculate" class="primary-action">Calculate layout</button><button class="secondary-action print-button">Print plan</button>
+<button id="calculate" class="primary-action">Calculate post layout</button><button class="secondary-action print-button">Print plan</button>
 </aside>
 <section class="card results">
-<div class="result-head"><div><div class="eyebrow">YOUR LAYOUT</div><h2 id="resultTitle">Layout</h2></div><div class="inline-actions"><button id="openField" class="small-btn">Open Field Mode</button><button class="small-btn print-button">Print Plan</button></div></div>
-<p id="toolDescription" class="help"></p>
-<div class="stats"><div class="stat"><span>Exact gap</span><strong id="exactGap">—</strong></div><div class="stat"><span>Practical gap</span><strong id="roundedGap">—</strong></div><div class="stat"><span>Center spacing</span><strong id="centerSpacing">—</strong></div></div>
+<div class="result-head"><div><div class="eyebrow">YOUR FENCE PLAN</div><h2>Post layout</h2></div><div class="inline-actions"><button id="openField" class="small-btn">Open Field Mode</button><button class="small-btn print-button">Print Plan</button></div></div>
+<p id="resultNote" class="help"></p>
+<div class="stats"><div class="stat"><span>Posts required</span><strong id="postCount">—</strong></div><div class="stat"><span>Actual spacing</span><strong id="actualSpacing">—</strong></div><div class="stat"><span>Clear gap</span><strong id="clearGap">—</strong></div></div>
 <div class="diagram-shell"><svg id="diagram" class="project-diagram" viewBox="0 0 980 410"></svg></div>
-<div class="marks-head"><h3 id="marksTitle">Center marks</h3><span id="precisionLabel"></span></div><div id="marks" class="marks"></div>
-<div class="field-explainer"><h3>What is Field Mode?</h3><p>Field Mode turns your phone or tablet into a giant step-by-step marking guide. Start at the same end you measured from, place a mark at the number on screen, then tap <strong>Next</strong>. It shows one mark at a time so you do not have to read a crowded list while holding a tape measure.</p><div class="field-steps"><div class="field-step">1 · Hook your tape at the starting edge</div><div class="field-step">2 · Mark the displayed measurement</div><div class="field-step">3 · Tap Next</div></div></div>
+<div class="marks-head"><h3>Post center marks</h3><span>Measured from the starting edge</span></div><div id="marks" class="marks"></div>
+<div class="field-explainer"><h3>Why this calculator is different</h3><p>You give MeasureMarks the construction rule — the maximum allowable post spacing — instead of guessing a post count. It adds enough posts to stay under that maximum, then divides the run evenly so every bay matches.</p><div class="field-steps"><div class="field-step">1 · Enter the finished fence run</div><div class="field-step">2 · Set your maximum spacing</div><div class="field-step">3 · Mark the calculated post centers</div></div></div>
 </section></section>
 <div class="wrap ad-slot ad-rectangle" aria-label="Advertisement space"></div><div class="ad-note">Reserved for a responsive AdSense unit; hidden from printed plans and Field Mode.</div>
-<section class="wrap print-plan card" id="printable-plan"><div class="print-head"><div><div class="eyebrow">PRINTABLE PLAN</div><h2>Job sheet</h2></div><button class="small-btn print-button">Print this plan</button></div><div class="print-grid"><div class="print-box"><h3>Project</h3><div id="planProject"></div></div><div class="print-box"><h3>Dimensions</h3><div id="planDimensions"></div></div><div class="print-box"><h3>Practical gap</h3><div id="planGap"></div></div></div><div class="diagram-shell"><svg id="printDiagram" class="project-diagram" viewBox="0 0 980 410"></svg></div><div class="print-marks"><h3>Mark list</h3><ol id="printMarks"></ol></div></section>
+<section class="wrap print-plan card" id="printable-plan"><div class="print-head"><div><div class="eyebrow">PRINTABLE PLAN</div><h2>Fence post job sheet</h2></div><button class="small-btn print-button">Print this plan</button></div><div class="print-grid"><div class="print-box"><h3>Project</h3><div>Fence Post Spacing</div></div><div class="print-box"><h3>Dimensions</h3><div id="planDimensions"></div></div><div class="print-box"><h3>Layout</h3><div id="planSpacing"></div></div></div><div class="diagram-shell"><svg id="printDiagram" class="project-diagram" viewBox="0 0 980 410"></svg></div><div class="print-marks"><h3>Post center mark list</h3><ol id="printMarks"></ol></div></section>
 </main>
 <div class="mobile-bar"><button id="mobileField" class="primary-mobile">Field Mode</button><button id="mobilePrint">Print</button></div>
-<div id="fieldOverlay" class="field-overlay" hidden><button id="closeField" class="field-close">×</button><div class="field-card"><div id="fieldCounter" class="field-counter"></div><div id="fieldValue" class="field-value">—</div><div id="fieldLabel" class="field-label">CENTER MARK</div><p class="field-tip">Measure from the same starting edge used for your total span. Put your pencil mark at this measurement, then tap Next.</p><div class="field-nav"><button id="prevMark">← Previous</button><button id="nextMark">Next →</button></div></div></div>
+<div id="fieldOverlay" class="field-overlay" hidden><button id="closeField" class="field-close">×</button><div class="field-card"><div id="fieldCounter" class="field-counter"></div><div id="fieldValue" class="field-value">—</div><div id="fieldLabel" class="field-label">POST CENTER</div><p class="field-tip">Hook your tape at the same starting edge used for the total run. Mark this post center, then tap Next.</p><div class="field-nav"><button id="prevMark">← Previous</button><button id="nextMark">Next →</button></div></div></div>
 <footer class="site-footer"><div class="wrap">MeasureMarks · Measure. Mark. Build.</div></footer>
-<script type="module" src="../../assets/js/app.js"></script><script src="../../assets/js/site.js"></script>
+<script src="../../assets/js/smart-fence-posts.js"></script><script src="../../assets/js/site.js"></script>
 </body></html>
