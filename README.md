@@ -44,3 +44,5 @@ Static deployment; no build command required.
 
 
 Dev deployment trigger: V0.5-dev.1
+
+Dev deployment trigger: V0.7-dev.1
