@@ -135,42 +135,31 @@ if(tool==='hardware'){
  function defaults(){if(state.units==='imperial'){$('#partWidth').value=18;$('#partHeight').value=28;$('#holeSpacing').value=5;$('#edgeOffsetX').value=2.5;$('#edgeOffsetY').value=2.5}else{$('#partWidth').value=457;$('#partHeight').value=711;$('#holeSpacing').value=128;$('#edgeOffsetX').value=64;$('#edgeOffsetY').value=64}$('#style').value='pull';$('#placement').value='upper-right';$('#orientation').value='vertical';updateUnitLabels()}
  function draw(d,svg){
    baseSvg(svg,'Cabinet hardware drilling blueprint');
-
-   // Preserve the real door/drawer aspect ratio while fitting it into the drawing area.
-   const maxW=610,maxH=270;
-   const scale=Math.min(maxW/d.width,maxH/d.height);
-   const w=Math.max(70,d.width*scale),h=Math.max(55,d.height*scale);
-   const left=500-w/2,top=190-h/2;
-
+   const maxW=610,maxH=270,scale=Math.min(maxW/d.width,maxH/d.height);
+   const w=Math.max(70,d.width*scale),h=Math.max(55,d.height*scale),left=500-w/2,top=190-h/2;
    svg.appendChild(svgEl('rect',{x:left,y:top,width:w,height:h,rx:5,fill:'#f4f0e8',stroke:'#a99d89','stroke-width':2}));
-
-   // Add a subtle center reference so unusual drawer/door proportions are easy to read.
    svg.appendChild(svgEl('line',{x1:left+w/2,y1:top,x2:left+w/2,y2:top+h,stroke:'#c7cfc9','stroke-width':1,'stroke-dasharray':'5 5'}));
    svg.appendChild(svgEl('line',{x1:left,y1:top+h/2,x2:left+w,y2:top+h/2,stroke:'#c7cfc9','stroke-width':1,'stroke-dasharray':'5 5'}));
-
-   d.holes.forEach((p,i)=>{
-     const x=left+(p.x/d.width)*w,y=top+(p.y/d.height)*h;
-     svg.appendChild(svgEl('circle',{cx:x,cy:y,r:7,fill:'#176b43'}));
-     svg.appendChild(svgEl('text',{x:x+10,y:y-8,'font-size':10,'font-weight':800,fill:'#176b43'},'H'+(i+1)));
-     svg.appendChild(svgEl('text',{x:x+10,y:y+8,'font-size':9,fill:'#405047'},'X '+fmt(p.x,true)+' / Y '+fmt(p.y,true)));
-   });
-
-   dimH(svg,left,left+w,382,'WIDTH '+fmt(d.width,true),top+h,top+h);
-   dimV(svg,top,top+h,left-32,'HEIGHT '+fmt(d.height,true),left,left);
-
-   if(d.holes.length===2){
-     const a=d.holes[0],b=d.holes[1],
-       x1=left+(a.x/d.width)*w,y1=top+(a.y/d.height)*h,
-       x2=left+(b.x/d.width)*w,y2=top+(b.y/d.height)*h;
-     if(Math.abs(x2-x1)>10) dimH(svg,x1,x2,Math.max(54,top-22),'HOLES '+fmt(d.holeSpace,true),y1,y2);
-     else dimV(svg,y1,y2,Math.min(946,left+w+32),'HOLES '+fmt(d.holeSpace,true),x1,x2);
-   }
-
-   svg.appendChild(svgEl('text',{
-     x:500,y:35,'text-anchor':'middle','font-size':10,'font-weight':700,fill:'#667067'
-   },'DRAWING PROPORTIONAL TO '+fmt(d.width,true)+' × '+fmt(d.height,true)));
+   d.holes.forEach((p,i)=>{const x=left+(p.x/d.width)*w,y=top+(p.y/d.height)*h;svg.appendChild(svgEl('circle',{cx:x,cy:y,r:7,fill:'#176b43'}));svg.appendChild(svgEl('text',{x:x+10,y:y-8,'font-size':10,'font-weight':800,fill:'#176b43'},'H'+(i+1)));svg.appendChild(svgEl('text',{x:x+10,y:y+8,'font-size':9,fill:'#405047'},'X '+fmt(p.x,true)+' / Y '+fmt(p.y,true)))});
+   dimH(svg,left,left+w,382,'WIDTH '+fmt(d.width,true),top+h,top+h);dimV(svg,top,top+h,left-32,'HEIGHT '+fmt(d.height,true),left,left);
+   if(d.holes.length===2){const a=d.holes[0],b=d.holes[1],x1=left+(a.x/d.width)*w,y1=top+(a.y/d.height)*h,x2=left+(b.x/d.width)*w,y2=top+(b.y/d.height)*h;if(Math.abs(x2-x1)>10)dimH(svg,x1,x2,Math.max(54,top-22),'HOLES '+fmt(d.holeSpace,true),y1,y2);else dimV(svg,y1,y2,Math.min(946,left+w+32),'HOLES '+fmt(d.holeSpace,true),x1,x2)}
+   svg.appendChild(svgEl('text',{x:500,y:35,'text-anchor':'middle','font-size':10,'font-weight':700,fill:'#667067'},'DRAWING PROPORTIONAL TO '+fmt(d.width,true)+' × '+fmt(d.height,true)));
  }
- function calc(){const width=Number($('#partWidth').value)||0,height=Number($('#partHeight').value)||0,style=$('#style').value,holeSpace=Number($('#holeSpacing').value)||0,place=$('#placement').value,orient=$('#orientation').value,offX=Number($('#edgeOffsetX').value)||0,offY=Number($('#edgeOffsetY').value)||0;if(!(width>0)||!(height>0))return;let cx=width/2,cy=height/2;if(place.includes('right'))cx=width-offX;if(place.includes('left'))cx=offX;if(place.includes('upper'))cy=offY;if(place.includes('lower'))cy=height-offY;const holes=[];if(style==='knob')holes.push({x:cx,y:cy});else{const h=holeSpace/2;if(orient==='vertical')holes.push({x:cx,y:cy-h},{x:cx,y:cy+h});else holes.push({x:cx-h,y:cy},{x:cx+h,y:cy})}const list=holes.map((p,i)=>({label:style==='knob'?'Knob point':'Hole '+(i+1),main:'X '+fmt(roundMark(p.x),true),sub:'Y '+fmt(roundMark(p.y),true)}));state.data={field:list.map((m,i)=>({counter:(style==='knob'?'POINT ':'HOLE ')+(i+1)+' OF '+list.length,value:m.main,label:m.sub}))};setResults({title:'Cabinet hardware layout',note:'Coordinates are measured from the <strong>left edge</strong> and <strong>top edge</strong> of the part.',a:style==='knob'?'Single point':place,b:list[0]?.main+' / '+list[0]?.sub,c:list[1]?(list[1].main+' / '+list[1].sub):'N/A',marksTitle:'Drill coordinates',marks:list,dimensions:fmt(width,true)+' wide × '+fmt(height,true)+' high',layout:style==='knob'?'Single knob':'Two-hole pull · '+fmt(holeSpace,true)+' spacing'});draw({width,height,holes,holeSpace},$('#diagram'));draw({width,height,holes,holeSpace},$('#printDiagram'))}
+ function calc(){
+   const width=Number($('#partWidth').value)||0,height=Number($('#partHeight').value)||0,style=$('#style').value,holeSpace=Number($('#holeSpacing').value)||0,place=$('#placement').value,orient=$('#orientation').value,offX=Number($('#edgeOffsetX').value)||0,offY=Number($('#edgeOffsetY').value)||0;
+   if(!(width>0)||!(height>0)){state.data=null;$('#resultNote').textContent='Enter a part width and height greater than zero.';return}
+   if(offX<0||offY<0||offX>width||offY>height){state.data=null;$('#resultNote').textContent='Edge offsets must stay within the cabinet part.';return}
+   if(style==='pull'&&!(holeSpace>0)){state.data=null;$('#resultNote').textContent='Enter a pull hole spacing greater than zero.';return}
+   let cx=width/2,cy=height/2;
+   if(place.includes('right'))cx=width-offX;if(place.includes('left'))cx=offX;if(place.includes('upper'))cy=offY;if(place.includes('lower'))cy=height-offY;
+   const holes=[];if(style==='knob')holes.push({x:cx,y:cy});else{const h=holeSpace/2;if(orient==='vertical')holes.push({x:cx,y:cy-h},{x:cx,y:cy+h});else holes.push({x:cx-h,y:cy},{x:cx+h,y:cy})}
+   const invalid=holes.some(p=>p.x<0||p.x>width||p.y<0||p.y>height);
+   if(invalid){state.data=null;$('#resultNote').innerHTML='<strong>That hardware position does not fit on the cabinet part.</strong> Reduce an edge offset or the pull hole spacing.';$('#marks').innerHTML='';return}
+   const list=holes.map((p,i)=>({label:style==='knob'?'Knob point':'Hole '+(i+1),main:'X '+fmt(roundMark(p.x),true),sub:'Y '+fmt(roundMark(p.y),true)}));
+   state.data={field:list.map((m,i)=>({counter:(style==='knob'?'POINT ':'HOLE ')+(i+1)+' OF '+list.length,value:m.main,label:m.sub}))};
+   setResults({title:'Cabinet hardware layout',note:'Coordinates are measured from the <strong>left edge</strong> and <strong>top edge</strong> of the part.',a:style==='knob'?'Single point':place,b:list[0]?.main+' / '+list[0]?.sub,c:list[1]?(list[1].main+' / '+list[1].sub):'N/A',marksTitle:'Drill coordinates',marks:list,dimensions:fmt(width,true)+' wide × '+fmt(height,true)+' high',layout:style==='knob'?'Single knob':'Two-hole pull · '+fmt(holeSpace,true)+' spacing'});
+   draw({width,height,holes,holeSpace},$('#diagram'));draw({width,height,holes,holeSpace},$('#printDiagram'))
+ }
  commonEvents(calc,defaults);defaults();updateUnitLabels();calc()
 }
 
@@ -181,13 +170,28 @@ if(tool==='lights'){
  function draw(d,svg){
    baseSvg(svg,'Recessed lighting ceiling blueprint');const left=150,right=900,top=75,bottom=330,xS=(right-left)/d.length,yS=(bottom-top)/d.width;
    svg.appendChild(svgEl('rect',{x:left,y:top,width:right-left,height:bottom-top,rx:4,fill:'#eef0ef',stroke:'#aeb8b1','stroke-width':2}));
-   d.points.forEach((p,i)=>{const x=left+p.x*xS,y=top+p.y*yS;svg.appendChild(svgEl('circle',{cx:x,cy:y,r:10,fill:'#fff9d8',stroke:'#8e8b7e','stroke-width':2}));svg.appendChild(svgEl('circle',{cx:x,cy:y,r:3.2,fill:'#e2c95a'}));svg.appendChild(svgEl('text',{x,y:y-15,'text-anchor':'middle','font-size':9,'font-weight':850,fill:'#18211a'},'#'+(i+1)));svg.appendChild(svgEl('text',{x,y:y+22,'text-anchor':'middle','font-size':8.5,fill:'#405047'},'X '+fmt(p.x,true)));svg.appendChild(svgEl('text',{x,y:y+33,'text-anchor':'middle','font-size':8.5,fill:'#405047'},'Y '+fmt(p.y,true)))});
+   const fixtureR=Math.max(3,Math.min(26,(d.fixture/2)*Math.min(xS,yS)));
+   d.points.forEach((p,i)=>{const x=left+p.x*xS,y=top+p.y*yS;svg.appendChild(svgEl('circle',{cx:x,cy:y,r:fixtureR,fill:'#fff9d8',stroke:'#8e8b7e','stroke-width':2}));svg.appendChild(svgEl('circle',{cx:x,cy:y,r:Math.max(2,fixtureR*.32),fill:'#e2c95a'}));svg.appendChild(svgEl('text',{x,y:y-fixtureR-5,'text-anchor':'middle','font-size':9,'font-weight':850,fill:'#18211a'},'#'+(i+1)));svg.appendChild(svgEl('text',{x,y:y+fixtureR+12,'text-anchor':'middle','font-size':8.5,fill:'#405047'},'X '+fmt(p.x,true)));svg.appendChild(svgEl('text',{x,y:y+fixtureR+23,'text-anchor':'middle','font-size':8.5,fill:'#405047'},'Y '+fmt(p.y,true)))});
    dimH(svg,left,right,385,'ROOM LENGTH '+fmt(d.length,true),bottom,bottom);dimV(svg,top,bottom,112,'ROOM WIDTH '+fmt(d.width,true),left,left);
    if(d.cols>1){const p1=d.points[0],p2=d.points[1];dimH(svg,left+p1.x*xS,left+p2.x*xS,55,'COLUMN '+fmt(d.xStep,true),top,top)}
    if(d.rows>1){const p1=d.points[0],p2=d.points[d.cols];dimV(svg,top+p1.y*yS,top+p2.y*yS,935,'ROW '+fmt(d.yStep,true),left,left)}
    if(d.points.length){const p=d.points[0];dimH(svg,left,left+p.x*xS,347,'WALL '+fmt(p.x,true),bottom,bottom);dimV(svg,top,top+p.y*yS,132,'WALL '+fmt(p.y,true),left,left)}
+   svg.appendChild(svgEl('text',{x:500,y:35,'text-anchor':'middle','font-size':10,'font-weight':700,fill:'#667067'},'FIXTURE DIAMETER '+fmt(d.fixture,true)+' · DRAWN TO ROOM SCALE'));
  }
- function calc(){syncOffset();const length=span(),width=Number($('#roomWidth').value)||0,rows=Math.max(1,Math.floor(Number($('#rows').value)||1)),cols=Math.max(1,Math.floor(Number($('#cols').value)||1)),mode=$('#edgeMode').value,fixed=Number($('#wallOffset').value)||0;if(!(length>0)||!(width>0))return;let xMargin,yMargin,xStep,yStep;if(mode==='balanced'){xMargin=length/(cols+1);xStep=xMargin;yMargin=width/(rows+1);yStep=yMargin}else{xMargin=fixed;yMargin=fixed;xStep=cols>1?(length-2*xMargin)/(cols-1):0;yStep=rows>1?(width-2*yMargin)/(rows-1):0}if(xStep<0||yStep<0){$('#resultNote').textContent='The fixed wall offset is too large for the selected grid.';return}const points=[];for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)points.push({x:cols===1?length/2:xMargin+c*xStep,y:rows===1?width/2:yMargin+r*yStep});const list=points.map((p,i)=>({label:'Light '+(i+1),main:'X '+fmt(roundMark(p.x),true),sub:'Y '+fmt(roundMark(p.y),true)}));state.data={field:list.map((m,i)=>({counter:'LIGHT '+(i+1)+' OF '+list.length,value:m.main,label:m.sub}))};setResults({title:'Recessed light layout',note:'This creates a <strong>'+rows+' × '+cols+'</strong> grid with exact X/Y center coordinates for every fixture.',a:points.length,b:fmt(rows===1?0:yStep,true),c:fmt(cols===1?0:xStep,true),marksTitle:'Light center coordinates',marks:list,dimensions:fmt(length,true)+' × '+fmt(width,true)+' room',layout:rows+' rows · '+cols+' per row · '+points.length+' lights'});const d={length,width,rows,cols,points,xStep,yStep};draw(d,$('#diagram'));draw(d,$('#printDiagram'))}
+ function calc(){
+   syncOffset();const length=span(),width=Number($('#roomWidth').value)||0,fixture=Number($('#fixture').value)||0,rows=Math.max(1,Math.floor(Number($('#rows').value)||1)),cols=Math.max(1,Math.floor(Number($('#cols').value)||1)),mode=$('#edgeMode').value,fixed=Number($('#wallOffset').value)||0;
+   if(!(length>0)||!(width>0)||!(fixture>0)){state.data=null;$('#resultNote').textContent='Enter valid room dimensions and a fixture diameter greater than zero.';return}
+   if(fixture>Math.min(length,width)){state.data=null;$('#resultNote').textContent='Fixture diameter cannot exceed the room dimensions.';return}
+   let xMargin,yMargin,xStep,yStep;
+   if(mode==='balanced'){xMargin=length/(cols+1);xStep=xMargin;yMargin=width/(rows+1);yStep=yMargin}else{xMargin=fixed;yMargin=fixed;xStep=cols>1?(length-2*xMargin)/(cols-1):0;yStep=rows>1?(width-2*yMargin)/(rows-1):0}
+   if(xStep<0||yStep<0){state.data=null;$('#resultNote').textContent='The fixed wall offset is too large for the selected grid.';return}
+   const points=[];for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)points.push({x:cols===1?length/2:xMargin+c*xStep,y:rows===1?width/2:yMargin+r*yStep});
+   const list=points.map((p,i)=>({label:'Light '+(i+1),main:'X '+fmt(roundMark(p.x),true),sub:'Y '+fmt(roundMark(p.y),true)}));
+   state.data={field:list.map((m,i)=>({counter:'LIGHT '+(i+1)+' OF '+list.length,value:m.main,label:m.sub}))};
+   setResults({title:'Recessed light layout',note:'This creates a <strong>'+rows+' × '+cols+'</strong> grid with <strong>'+fmt(fixture,true)+'</strong> fixtures and exact X/Y center coordinates.',a:points.length,b:fmt(rows===1?0:yStep,true),c:fmt(cols===1?0:xStep,true),marksTitle:'Light center coordinates',marks:list,dimensions:fmt(length,true)+' × '+fmt(width,true)+' room · '+fmt(fixture,true)+' fixture diameter',layout:rows+' rows · '+cols+' per row · '+points.length+' lights'});
+   const d={length,width,fixture,rows,cols,points,xStep,yStep};draw(d,$('#diagram'));draw(d,$('#printDiagram'))
+ }
  commonEvents(calc,defaults);defaults();syncSpanMode();updateUnitLabels();calc()
 }
+
 })();
