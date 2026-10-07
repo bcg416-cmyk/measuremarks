@@ -2,7 +2,21 @@
 /* MeasureMarks shared site bootstrap + calculator fallback.
    The fallback only starts when the ES-module calculator did not initialize. */
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('/service-worker.js').catch(() => {}));
+  const isDevHost = location.hostname.includes('measuremarks-dev') || location.hostname.startsWith('dev.');
+  if (isDevHost) {
+    window.addEventListener('load', async () => {
+      try {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map(r => r.unregister()));
+        if ('caches' in window) {
+          const keys = await caches.keys();
+          await Promise.all(keys.filter(k => k.startsWith('measuremarks-')).map(k => caches.delete(k)));
+        }
+      } catch {}
+    });
+  } else {
+    window.addEventListener('load', () => navigator.serviceWorker.register('/service-worker.js').catch(() => {}));
+  }
 }
 
 (() => {
