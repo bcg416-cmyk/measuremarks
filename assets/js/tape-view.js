@@ -14,6 +14,28 @@
   if(tip)card.insertBefore(panel,tip);else card.appendChild(panel);
   const svg=panel.querySelector('.tape-svg'),body=panel.querySelector('.tape-body'),toggle=panel.querySelector('.tape-toggle'),instruction=panel.querySelector('.tape-instruction');
   const fieldLabel=document.getElementById('fieldLabel');
+  // Keep calculator-owned X/Y values untouched; mirror the selected coordinate
+  // in the main Field Mode readout so Next/Previous still use the source data.
+  const bigReadout=document.createElement('div');
+  bigReadout.className='field-value';
+  bigReadout.hidden=true;
+  const readoutReference=document.createElement('div');
+  readoutReference.className='field-label';
+  readoutReference.hidden=true;
+  value.before(bigReadout);
+  fieldLabel?.after(readoutReference);
+  function updatePrimaryReadout(choices){
+    const hasAxes=choices.length>1;
+    const chosen=choices[Math.min(selectedAxis,choices.length-1)];
+    bigReadout.hidden=!hasAxes;
+    readoutReference.hidden=!hasAxes;
+    value.hidden=hasAxes;
+    if(fieldLabel)fieldLabel.hidden=hasAxes;
+    if(!hasAxes)return;
+    bigReadout.textContent=chosen.axis+' '+chosen.raw;
+    readoutReference.textContent=chosen.title;
+  }
+
   const axis=document.createElement('div');
   axis.style.cssText='display:none;gap:8px;margin:8px 0;flex-wrap:wrap';
   axis.setAttribute('role','group');axis.setAttribute('aria-label','Choose measurement to show on tape');
@@ -70,6 +92,7 @@
     panel.hidden=Boolean(metric);
     if(metric)return;
     const choices=candidates();
+    updatePrimaryReadout(choices);
     axis.style.display=choices.length>1?'flex':'none';
     horizontal.textContent=choices[0]?.title||'Horizontal / X';vertical.textContent=choices[1]?.title||'Vertical / Y';
     horizontal.setAttribute('aria-pressed',String(selectedAxis===0));vertical.setAttribute('aria-pressed',String(selectedAxis===1));
