@@ -57,6 +57,19 @@ function draw(svg){
  const cutRight=left+best.leftCut*scale;dimH(svg,left,cutRight,105,'EDGE CUT '+fmt(best.leftCut,true),top);
  const firstFull=best.intervals.find(x=>x.full);if(firstFull){const a=left+firstFull.start*scale,b=left+firstFull.end*scale;dimH(svg,a,b,83,'TILE '+fmt(tile,true),top)}
  if(best.jointCenters.length>1){const a=left+best.jointCenters[0]*scale,b=left+best.jointCenters[1]*scale;dimH(svg,a,b,352,'MODULE '+fmt(tile+grout,true),bottom)}
+ const markValues=data.best.jointCenters;
+ if(markValues.length){
+   const rows=Math.ceil(markValues.length/4),height=468+rows*25;
+   svg.setAttribute('viewBox','0 0 980 '+height);
+   svg.appendChild(mk('rect',{x:22,y:413,width:936,height:height-425,rx:10,fill:'#f5f8f5',stroke:'#d9e2dc'}));
+   svg.appendChild(mk('text',{x:40,y:438,'font-size':15,'font-weight':800,fill:'#18211a'},'GROUT JOINT MARKS FROM START EDGE'));
+   markValues.forEach((value,i)=>{
+     const x=42+(i%4)*231,y=466+Math.floor(i/4)*25;
+     const mark=units==='metric'?fmt(roundMark(value)):fmt(roundMark(value),false);
+     svg.appendChild(mk('text',{x,y,'font-size':12,'font-weight':700,fill:'#26342b'},'#'+(i+1)+'  '+mark));
+   });
+ }
+
 }
 function renderField(){if(!data)return;const marks=data.best.jointCenters.map(roundMark);if(!marks.length){E.fieldCounter.textContent='LAYOUT REFERENCE';E.fieldValue.textContent=fmt(data.span/2,true);E.fieldLabel.textContent=data.best.mode==='tile'?'TILE CENTERLINE':'GROUT CENTERLINE';return}fieldIndex=Math.max(0,Math.min(fieldIndex,marks.length-1));E.fieldCounter.textContent='GROUT JOINT '+(fieldIndex+1)+' OF '+marks.length;E.fieldValue.textContent=fmt(marks[fieldIndex],true);E.fieldLabel.textContent='JOINT CENTER FROM STARTING EDGE'}
 function next(d){if(!data)return;const n=data.best.jointCenters.length;if(!n)return;fieldIndex=(fieldIndex+d+n)%n;renderField()}
