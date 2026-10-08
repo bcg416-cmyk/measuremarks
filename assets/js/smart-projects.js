@@ -158,9 +158,14 @@ if(tool==='hardware'){
    if(!(width>0)||!(height>0)){clearSmartResult('Enter a part width and height greater than zero.');return}
    if(offX<0||offY<0||offX>width||offY>height){clearSmartResult('Edge offsets must stay within the cabinet part.');return}
    if(style==='pull'&&!(holeSpace>0)){clearSmartResult('Enter a pull hole spacing greater than zero.');return}
+   // Offsets locate the nearest mounting hole; the other hole extends inward.
+   const half=style==='pull'?holeSpace/2:0;
    let cx=width/2,cy=height/2;
-   if(place.includes('right'))cx=width-offX;if(place.includes('left'))cx=offX;if(place.includes('upper'))cy=offY;if(place.includes('lower'))cy=height-offY;
-   const holes=[];if(style==='knob')holes.push({x:cx,y:cy});else{const h=holeSpace/2;if(orient==='vertical')holes.push({x:cx,y:cy-h},{x:cx,y:cy+h});else holes.push({x:cx-h,y:cy},{x:cx+h,y:cy})}
+   if(place.includes('right'))cx=width-offX-(style==='pull'&&orient==='horizontal'?half:0);
+   if(place.includes('left'))cx=offX+(style==='pull'&&orient==='horizontal'?half:0);
+   if(place.includes('upper'))cy=offY+(style==='pull'&&orient==='vertical'?half:0);
+   if(place.includes('lower'))cy=height-offY-(style==='pull'&&orient==='vertical'?half:0);
+   const holes=[];if(style==='knob')holes.push({x:cx,y:cy});else if(orient==='vertical')holes.push({x:cx,y:cy-half},{x:cx,y:cy+half});else holes.push({x:cx-half,y:cy},{x:cx+half,y:cy})
    const invalid=holes.some(p=>p.x<0||p.x>width||p.y<0||p.y>height);
    if(invalid){clearSmartResult('That hardware position does not fit on the cabinet part. Reduce an edge offset or the pull hole spacing.');return}
    const list=holes.map((p,i)=>({label:style==='knob'?'Knob point':'Hole '+(i+1),main:'X '+fmt(roundMark(p.x),true),sub:'Y '+fmt(roundMark(p.y),true)}));
