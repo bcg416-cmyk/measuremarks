@@ -180,7 +180,25 @@ if(tool==='hardware'){
         dimV(svg,Math.min(yEdge,hole.y),Math.max(yEdge,hole.y),dimensionX,'H'+(hole.index+1)+' '+fmt(hole.value,true),left+w,left+w);
       });
     }
-    svg.appendChild(svgEl('text',{x:500,y:35,'text-anchor':'middle','font-size':10,'font-weight':700,fill:'#667067'},'DRAWING PROPORTIONAL TO '+fmt(d.width,true)+' × '+fmt(d.height,true)));
+    // Centered layouts must show each drill mark measured from an actual part edge.
+     if(d.place==='center'){
+       if(d.holes.length===2 && Math.abs(d.holes[0].x-d.holes[1].x)>1e-6){
+         d.holes.forEach((p,i)=>{
+           const hx=left+p.x/d.width*w,trackY=top+h+25+i*26;
+           dimH(svg,left,hx,trackY,'H'+(i+1)+' '+fmt(p.x,true),top+h,top+h);
+         });
+         const hy=top+d.holes[0].y/d.height*h;
+         if(hy-top>5)dimV(svg,top,hy,left-66,'TOP '+fmt(d.holes[0].y,true),left,left);
+       }else{
+         d.holes.forEach((p,i)=>{
+           const hy=top+p.y/d.height*h;
+           if(hy-top>5)dimV(svg,top,hy,Math.min(925,left+w+65+i*62),'H'+(i+1)+' '+fmt(p.y,true),left+w,left+w);
+         });
+         const hx=left+d.holes[0].x/d.width*w;
+         if(hx-left>5)dimH(svg,left,hx,top+h+25,'LEFT '+fmt(d.holes[0].x,true),top+h,top+h);
+       }
+     }
+     svg.appendChild(svgEl('text',{x:500,y:35,'text-anchor':'middle','font-size':10,'font-weight':700,fill:'#667067'},'DRAWING PROPORTIONAL TO '+fmt(d.width,true)+' × '+fmt(d.height,true)));
  }
  function showHardwareFitWarning(width,height,message){
    clearSmartResult(message);
