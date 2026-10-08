@@ -1,8 +1,7 @@
-/* MeasureMarks Tape View pilot: imperial Field Mode, Board & Batten only.
+/* MeasureMarks shared Tape View: imperial Field Mode across all calculators.
    Uses the rounded field mark, never an independently calculated position. */
 (() => {
   'use strict';
-  if (document.body.dataset.tool !== 'batten') return;
   const field=document.getElementById('fieldOverlay'),value=document.getElementById('fieldValue');
   const card=field?.querySelector('.field-card');
   if(!card||!value)return;
@@ -14,6 +13,14 @@
   const tip=card.querySelector('.field-tip');
   if(tip)card.insertBefore(panel,tip);else card.appendChild(panel);
   const svg=panel.querySelector('.tape-svg'),body=panel.querySelector('.tape-body'),toggle=panel.querySelector('.tape-toggle'),instruction=panel.querySelector('.tape-instruction');
+  const fieldLabel=document.getElementById('fieldLabel');
+  const axis=document.createElement('div');
+  axis.style.cssText='display:none;gap:8px;margin:8px 0;flex-wrap:wrap';
+  axis.setAttribute('role','group');axis.setAttribute('aria-label','Choose measurement to show on tape');
+  const horizontal=document.createElement('button'),vertical=document.createElement('button');
+  [horizontal,vertical].forEach(b=>{b.type='button';b.style.cssText='border:1px solid #52695c;border-radius:8px;padding:7px 12px;background:white;color:#18211a;font-weight:700';axis.appendChild(b);});
+  body.insertBefore(axis,instruction);
+  let selectedAxis=0;
   let showing=true;
   const NS='http://www.w3.org/2000/svg';
   function node(tag,attrs={},text){
@@ -24,18 +31,39 @@
     return n;
   }
   function parseMark(s){
-    // Field Mode imperial marks are inch values such as 54 1/2" or 3/16".
-    const match=s.trim().replace(/[″”]/g,'"').match(/^(\d+)(?:\s+(\d+)\/(\d+))?\s*"$/)
-      ||s.trim().replace(/[″”]/g,'"').match(/^(\d+)\/(\d+)\s*"$/);
+    // Parse only a complete imperial mark: inches/fractions or feet plus inches.
+    const text=s.trim().replace(/[″”]/g,'"').replace(/[′’]/g,"'");
+    const match=text.match(/^(?:(\d+)\s*'\s*)?(?:(\d+)(?:\s+(\d+)\/(\d+))?|(\d+)\/(\d+))\s*"$/);
     if(!match)return null;
-    if(match.length===3)return Number(match[1])/Number(match[2]);
-    return Number(match[1])+(match[2]?Number(match[2])/Number(match[3]):0);
+    const feet=Number(match[1]||0),inches=Number(match[2]||0);
+    const numerator=Number(match[3]||match[5]||0),denominator=Number(match[4]||match[6]||1);
+    if(denominator<=0)return null;
+    return feet*12+inches+numerator/denominator;
+  }
+  function candidates(){
+    const primary=value.textContent.trim(),secondary=fieldLabel?.textContent.trim()||'';
+    const extract=(text)=>{
+      // X/Y prefix, then a stand-alone measurement; optional "from right edge" suffix.
+      const match=text.match(/^(?:[XY]\s+)?((?:(?:\d+\s*'\s*)?\d+(?:\s+\d+\/\d+)?|(?:\d+\s*'\s*)?\d+\/\d+)\s*["″”])(?:\s+from\s+.+)?$/i);
+      if(!match)return null;
+      const number=parseMark(match[1]);
+      return number===null?null:{raw:match[1],measurement:number,reference:text.replace(match[1],'').replace(/^\s*[XY]\s*/i,'').trim()};
+    };
+    const first=extract(primary),second=extract(secondary);
+    return [first,second].filter(Boolean);
   }
   function render(){
     const metric=document.querySelector('.seg[data-units="metric"].active');
     panel.hidden=Boolean(metric);
     if(metric)return;
-    const raw=value.textContent.trim(),measurement=parseMark(raw);
+    const choices=candidates();
+    axis.style.display=choices.length>1?'flex':'none';
+    horizontal.textContent='Horizontal / X';vertical.textContent='Vertical / Y';
+    horizontal.setAttribute('aria-pressed',String(selectedAxis===0));vertical.setAttribute('aria-pressed',String(selectedAxis===1));
+    horizontal.style.background=selectedAxis===0?'#176b43':'white';horizontal.style.color=selectedAxis===0?'white':'#18211a';
+    vertical.style.background=selectedAxis===1?'#176b43':'white';vertical.style.color=selectedAxis===1?'white':'#18211a';
+    const chosen=choices[Math.min(selectedAxis,choices.length-1)];
+    const raw=chosen?.raw||'',measurement=chosen?.measurement??null;
     if(measurement===null||!Number.isFinite(measurement)){instruction.textContent='Tape View cannot read this mark.';svg.replaceChildren();return;}
     const precision=Number(document.getElementById('precision')?.value)||16;
     // Use the exact rounded display value, aligned to the selected precision.
@@ -64,11 +92,14 @@
     svg.setAttribute('aria-label',readable);
     instruction.textContent='Make your mark at '+raw+'. The red line identifies the exact tick.';
   }
+  horizontal.addEventListener('click',()=>{selectedAxis=0;render();});
+  vertical.addEventListener('click',()=>{selectedAxis=1;render();});
   toggle.addEventListener('click',()=>{
     showing=!showing;body.hidden=!showing;toggle.textContent=showing?'Hide tape':'Show tape';toggle.setAttribute('aria-pressed',String(showing));
     if(showing)render();
   });
   new MutationObserver(()=>{if(showing)render();}).observe(value,{subtree:true,characterData:true,childList:true});
+  if(fieldLabel)new MutationObserver(()=>{if(showing)render();}).observe(fieldLabel,{subtree:true,characterData:true,childList:true});
   document.getElementById('precision')?.addEventListener('change',render);
   document.querySelectorAll('.seg[data-units]').forEach(b=>b.addEventListener('click',()=>queueMicrotask(render)));
   render();
