@@ -41,16 +41,29 @@
     return feet*12+inches+numerator/denominator;
   }
   function candidates(){
-    const primary=value.textContent.trim(),secondary=fieldLabel?.textContent.trim()||'';
-    const extract=(text)=>{
-      // X/Y prefix, then a stand-alone measurement; optional "from right edge" suffix.
-      const match=text.match(/^(?:[XY]\s+)?((?:(?:\d+\s*'\s*)?\d+(?:\s+\d+\/\d+)?|(?:\d+\s*'\s*)?\d+\/\d+)\s*["″”])(?:\s+from\s+.+)?$/i);
-      if(!match)return null;
-      const number=parseMark(match[1]);
-      return number===null?null:{raw:match[1],measurement:number,reference:text.replace(match[1],'').replace(/^\s*[XY]\s*/i,'').trim()};
+    const tool=document.body.dataset.tool||'';
+    const sources=[value.textContent.trim(),fieldLabel?.textContent.trim()||''];
+    const descriptions={
+      pictures:['From left wall','Height above floor'],
+      lights:['From left wall','From top wall'],
+      hardware:['Horizontal distance','Vertical distance']
     };
-    const first=extract(primary),second=extract(secondary);
-    return [first,second].filter(Boolean);
+    const names=descriptions[tool]||['Horizontal distance','Vertical distance'];
+    return sources.map((source,i)=>{
+      const match=source.match(/^(?:([XY])\s+)?(.+?)\s*(?:from\s+(left|right|top|bottom)\s+edge)?$/i);
+      if(!match)return null;
+      const raw=match[2].trim();
+      const measurement=parseMark(raw);
+      if(measurement===null)return null;
+      let title=names[i]||'Measurement';
+      if(tool==='hardware'){
+        const edge=match[3]?.toLowerCase();
+        if(edge)title='From '+edge+' edge';
+      }
+      if(tool==='pictures')title=i===0?'From left wall':'Height above floor';
+      if(tool==='lights')title=i===0?'From left wall':'From top wall';
+      return {raw,measurement,title,axis:match[1]|| (i===0?'X':'Y')};
+    }).filter(Boolean);
   }
   function render(){
     const metric=document.querySelector('.seg[data-units="metric"].active');
@@ -58,12 +71,13 @@
     if(metric)return;
     const choices=candidates();
     axis.style.display=choices.length>1?'flex':'none';
-    horizontal.textContent='Horizontal / X';vertical.textContent='Vertical / Y';
+    horizontal.textContent=choices[0]?.title||'Horizontal / X';vertical.textContent=choices[1]?.title||'Vertical / Y';
     horizontal.setAttribute('aria-pressed',String(selectedAxis===0));vertical.setAttribute('aria-pressed',String(selectedAxis===1));
     horizontal.style.background=selectedAxis===0?'#176b43':'white';horizontal.style.color=selectedAxis===0?'white':'#18211a';
     vertical.style.background=selectedAxis===1?'#176b43':'white';vertical.style.color=selectedAxis===1?'white':'#18211a';
     const chosen=choices[Math.min(selectedAxis,choices.length-1)];
     const raw=chosen?.raw||'',measurement=chosen?.measurement??null;
+    const reference=chosen?.title||'Measurement';
     if(measurement===null||!Number.isFinite(measurement)){instruction.textContent='Tape View cannot read this mark.';svg.replaceChildren();return;}
     const precision=Number(document.getElementById('precision')?.value)||16;
     // Use the exact rounded display value, aligned to the selected precision.
@@ -88,9 +102,9 @@
     node('path',{d:'M '+(markX-11)+' 4 L '+(markX+11)+' 4 L '+markX+' 24 Z',fill:'#d52131'});
     node('rect',{x:markX-65,y:145,width:130,height:19,rx:6,fill:'#fff8e5'});
     node('text',{x:markX,y:159,'text-anchor':'middle','font-size':14,'font-weight':850,fill:'#a61525'},'MARK '+raw);
-    const readable='Tape measure showing '+raw+', with the exact graduation highlighted in red between '+whole+' and '+(whole+1)+' inches.';
+    const readable=reference+'. Tape measure showing '+raw+', with the exact graduation highlighted in red between '+whole+' and '+(whole+1)+' inches.';
     svg.setAttribute('aria-label',readable);
-    instruction.textContent='Make your mark at '+raw+'. The red line identifies the exact tick.';
+    instruction.textContent=reference+': '+raw+'. The red line identifies the exact tick.';
   }
   horizontal.addEventListener('click',()=>{selectedAxis=0;render();});
   vertical.addEventListener('click',()=>{selectedAxis=1;render();});
