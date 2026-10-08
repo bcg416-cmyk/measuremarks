@@ -151,6 +151,13 @@ if(tool==='hardware'){
    d.holes.forEach((p,i)=>{const x=left+(p.x/d.width)*w,y=top+(p.y/d.height)*h;svg.appendChild(svgEl('circle',{cx:x,cy:y,r:7,fill:'#176b43'}));svg.appendChild(svgEl('text',{x:x+10,y:y-8,'font-size':10,'font-weight':800,fill:'#176b43'},'H'+(i+1)));svg.appendChild(svgEl('text',{x:x+10,y:y+8,'font-size':9,fill:'#405047'},'X '+fmt(p.x,true)+' / Y '+fmt(p.y,true)))});
    dimH(svg,left,left+w,382,'WIDTH '+fmt(d.width,true),top+h,top+h);dimV(svg,top,top+h,left-32,'HEIGHT '+fmt(d.height,true),left,left);
    if(d.holes.length===2){const a=d.holes[0],b=d.holes[1],x1=left+(a.x/d.width)*w,y1=top+(a.y/d.height)*h,x2=left+(b.x/d.width)*w,y2=top+(b.y/d.height)*h;if(Math.abs(x2-x1)>10)dimH(svg,x1,x2,Math.max(54,top-22),'HOLES '+fmt(d.holeSpace,true),y1,y2);else dimV(svg,y1,y2,Math.min(946,left+w+32),'HOLES '+fmt(d.holeSpace,true),x1,x2)}
+    // Explicit horizontal locating dimension: edge to nearest hole centerline.
+    if(d.place.includes('left')||d.place.includes('right')){
+      const nearest=d.place.includes('right')?Math.max(...d.holes.map(p=>p.x)):Math.min(...d.holes.map(p=>p.x));
+      const hx=left+(nearest/d.width)*w, edge=d.place.includes('right')?left+w:left;
+      const offset=Math.abs((d.place.includes('right')?d.width-nearest:nearest));
+      dimH(svg,Math.min(hx,edge),Math.max(hx,edge),top+h+25,'X OFFSET '+fmt(offset,true),top+h,top+h);
+    }
    svg.appendChild(svgEl('text',{x:500,y:35,'text-anchor':'middle','font-size':10,'font-weight':700,fill:'#667067'},'DRAWING PROPORTIONAL TO '+fmt(d.width,true)+' × '+fmt(d.height,true)));
  }
  function calc(){
@@ -171,7 +178,7 @@ if(tool==='hardware'){
    const list=holes.map((p,i)=>({label:style==='knob'?'Knob point':'Hole '+(i+1),main:'X '+fmt(roundMark(p.x),true),sub:'Y '+fmt(roundMark(p.y),true)}));
    state.data={field:list.map((m,i)=>({counter:(style==='knob'?'POINT ':'HOLE ')+(i+1)+' OF '+list.length,value:m.main,label:m.sub}))};
    setResults({title:'Cabinet hardware layout',note:'Coordinates are measured from the <strong>left edge</strong> and <strong>top edge</strong> of the part.',a:style==='knob'?'Single point':place,b:list[0]?.main+' / '+list[0]?.sub,c:list[1]?(list[1].main+' / '+list[1].sub):'N/A',marksTitle:'Drill coordinates',marks:list,dimensions:fmt(width,true)+' wide × '+fmt(height,true)+' high',layout:style==='knob'?'Single knob':'Two-hole pull · '+fmt(holeSpace,true)+' spacing'});
-   draw({width,height,holes,holeSpace},$('#diagram'));draw({width,height,holes,holeSpace},$('#printDiagram'))
+   draw({width,height,holes,holeSpace,place},$('#diagram'));draw({width,height,holes,holeSpace,place},$('#printDiagram'))
  }
  commonEvents(calc,defaults);defaults();updateUnitLabels();calc()
 }
