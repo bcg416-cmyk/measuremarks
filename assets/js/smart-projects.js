@@ -56,6 +56,19 @@ function setResults({title,note,a,b,c,marksTitle,marks,dimensions,layout}){$('#r
 function renderField(){if(!state.data?.field?.length)return;const f=state.data.field[state.fieldIndex];$('#fieldCounter').textContent=f.counter||('MARK '+(state.fieldIndex+1)+' OF '+state.data.field.length);$('#fieldValue').textContent=f.value;$('#fieldLabel').textContent=f.label}
 function stepField(d){if(!state.data?.field?.length)return;state.fieldIndex=(state.fieldIndex+d+state.data.field.length)%state.data.field.length;renderField()}
 function commonEvents(calc,defaults){document.querySelectorAll('.seg').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.seg').forEach(x=>x.classList.remove('active'));b.classList.add('active');state.units=b.dataset.units;defaults();syncSpanMode();updateUnitLabels();calc()}));$('#spanMode')?.addEventListener('change',()=>{syncSpanMode();calc()});document.querySelectorAll('.controls input,.controls select').forEach(x=>{x.addEventListener('input',calc);x.addEventListener('change',calc)});$('#calculate')?.addEventListener('click',calc);document.querySelectorAll('.print-button').forEach(b=>b.addEventListener('click',()=>window.print()));$('#openField')?.addEventListener('click',()=>{if(state.data){$('#fieldOverlay').hidden=false;state.fieldIndex=0;renderField()}});$('#closeField')?.addEventListener('click',()=>$('#fieldOverlay').hidden=true);$('#prevMark')?.addEventListener('click',()=>stepField(-1));$('#nextMark')?.addEventListener('click',()=>stepField(1));$('#mobileField')?.addEventListener('click',()=>$('#openField')?.click());$('#mobilePrint')?.addEventListener('click',()=>window.print())}
+/* Installation marks use inches, even past 12; overall imperial dimensions use feet and inches. */
+function markFmt(v){return state.units==='metric'?fmt(roundMark(v)):frac(roundMark(v),Number($('#precision')?.value||16))}
+function blueprintMarkSchedule(svg,title,marks){
+ if(!svg||!marks.length)return;
+ const columns=4,rowHeight=25,rows=Math.ceil(marks.length/columns),totalHeight=468+rows*rowHeight;
+ svg.setAttribute('viewBox','0 0 980 '+totalHeight);
+ svg.appendChild(svgEl('rect',{x:22,y:413,width:936,height:totalHeight-425,rx:10,fill:'#f5f8f5',stroke:'#d9e2dc'}));
+ svg.appendChild(svgEl('text',{x:40,y:438,'font-size':15,'font-weight':800,fill:'#18211a'},title));
+ marks.forEach((mark,i)=>{const x=42+(i%columns)*231,y=466+Math.floor(i/columns)*rowHeight;
+  svg.appendChild(svgEl('text',{x,y,'font-size':12,'font-weight':700,fill:'#26342b'},mark));
+ });
+}
+
 function drawLinear(type,d,svg){
   baseSvg(svg,d.title);const left=86,right=920,scale=(right-left)/d.span;
   if(type==='fence'){[145,255].forEach(y=>svg.appendChild(svgEl('rect',{x:left-8,y,width:right-left+16,height:14,rx:4,fill:'#af8b61'})))}
@@ -72,6 +85,7 @@ function drawLinear(type,d,svg){
     if(firstLeft-left>7)dimH(svg,left,firstLeft,340,'EDGE '+fmt(d.edgeGap,true),300,300);
   }
   if(d.width*scale>18){const c=left+d.centers[0]*scale;dimH(svg,c-d.width*scale/2,c+d.width*scale/2,325,'WIDTH '+fmt(d.width,true),290,290)}
+  blueprintMarkSchedule(svg,(type==='fence'?'PICKET':type==='balusters'?'BALUSTER':type==='batten'?'BATTEN':type==='wainscot'?'STILE':'SLAT')+' CENTER MARKS FROM LEFT EDGE',d.centers.map((v,i)=>'#'+(i+1)+'  '+markFmt(v)));
 }
 
 // Fence pickets / balusters
@@ -123,6 +137,7 @@ if(tool==='pictures'){
    const firstLeft=left+(d.centers[0]-d.frames[0].w/2)*xS;if(firstLeft-left>5)dimH(svg,left,firstLeft,350,'MARGIN '+fmt(d.outside,true),bottom,bottom);
    dimV(svg,bottom,bottom-d.centerH*yS,70,'CENTER '+fmt(d.centerH,true),left,left);
    dimV(svg,bottom,bottom-d.hookHeights[0]*yS,42,'HOOK '+fmt(d.hookHeights[0],true),left,left);
+    blueprintMarkSchedule(svg,'PICTURE HOOK MARKS (X FROM LEFT · Y FROM FLOOR)',d.centers.map((x,i)=>'#'+(i+1)+'  X '+markFmt(x)+' / Y '+markFmt(d.hookHeights[i])));
  }
  function calc(){
    if($('#frameMode')?.value==='custom'&&document.querySelectorAll('.custom-frame-row').length!==Math.max(1,Math.min(12,Math.floor(Number($('#count').value)||1))))renderCustomRows();
@@ -260,6 +275,7 @@ if(tool==='lights'){
    if(d.rows>1){const p1=d.points[0],p2=d.points[d.cols];dimV(svg,top+p1.y*yS,top+p2.y*yS,935,'ROW '+fmt(d.yStep,true),left,left)}
    if(d.points.length){const p=d.points[0];dimH(svg,left,left+p.x*xS,347,'WALL '+fmt(p.x,true),bottom,bottom);dimV(svg,top,top+p.y*yS,132,'WALL '+fmt(p.y,true),left,left)}
    svg.appendChild(svgEl('text',{x:500,y:35,'text-anchor':'middle','font-size':10,'font-weight':700,fill:'#667067'},'FIXTURE DIAMETER '+fmt(d.fixture,true)+' · DRAWN TO ROOM SCALE'));
+    blueprintMarkSchedule(svg,'LIGHT CENTER MARKS (X FROM LEFT · Y FROM TOP)',d.points.map((p,i)=>'#'+(i+1)+'  X '+markFmt(p.x)+' / Y '+markFmt(p.y)));
  }
  function calc(){
    syncOffset();const length=span(),width=Number($('#roomWidth').value)||0,fixture=Number($('#fixture').value)||0,rows=Math.max(1,Math.floor(Number($('#rows').value)||1)),cols=Math.max(1,Math.floor(Number($('#cols').value)||1)),mode=$('#edgeMode').value,fixed=Number($('#wallOffset').value)||0;
