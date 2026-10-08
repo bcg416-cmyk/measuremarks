@@ -148,17 +148,28 @@ if(tool==='hardware'){
    svg.appendChild(svgEl('rect',{x:left,y:top,width:w,height:h,rx:5,fill:'#f4f0e8',stroke:'#a99d89','stroke-width':2}));
    svg.appendChild(svgEl('line',{x1:left+w/2,y1:top,x2:left+w/2,y2:top+h,stroke:'#c7cfc9','stroke-width':1,'stroke-dasharray':'5 5'}));
    svg.appendChild(svgEl('line',{x1:left,y1:top+h/2,x2:left+w,y2:top+h/2,stroke:'#c7cfc9','stroke-width':1,'stroke-dasharray':'5 5'}));
-   d.holes.forEach((p,i)=>{const x=left+(p.x/d.width)*w,y=top+(p.y/d.height)*h;svg.appendChild(svgEl('circle',{cx:x,cy:y,r:7,fill:'#176b43'}));svg.appendChild(svgEl('text',{x:x+10,y:y-8,'font-size':10,'font-weight':800,fill:'#176b43'},'H'+(i+1)));svg.appendChild(svgEl('text',{x:x+10,y:y+8,'font-size':9,fill:'#405047'},'X '+fmt(p.x,true)+' / Y '+fmt(p.y,true)))});
-   dimH(svg,left,left+w,382,'WIDTH '+fmt(d.width,true),top+h,top+h);dimV(svg,top,top+h,left-32,'HEIGHT '+fmt(d.height,true),left,left);
-   if(d.holes.length===2){const a=d.holes[0],b=d.holes[1],x1=left+(a.x/d.width)*w,y1=top+(a.y/d.height)*h,x2=left+(b.x/d.width)*w,y2=top+(b.y/d.height)*h;if(Math.abs(x2-x1)>10)dimH(svg,x1,x2,Math.max(54,top-22),'HOLES '+fmt(d.holeSpace,true),y1,y2);else dimV(svg,y1,y2,Math.min(946,left+w+32),'HOLES '+fmt(d.holeSpace,true),x1,x2)}
-    // Explicit horizontal locating dimension: edge to nearest hole centerline.
-    if(d.place.includes('left')||d.place.includes('right')){
-      const nearest=d.place.includes('right')?Math.max(...d.holes.map(p=>p.x)):Math.min(...d.holes.map(p=>p.x));
-      const hx=left+(nearest/d.width)*w, edge=d.place.includes('right')?left+w:left;
-      const offset=Math.abs((d.place.includes('right')?d.width-nearest:nearest));
-      dimH(svg,Math.min(hx,edge),Math.max(hx,edge),top+h+25,'X OFFSET '+fmt(offset,true),top+h,top+h);
+   const side=d.place.includes('right')?'right':'left', vertical=d.place.includes('lower')?'bottom':'top';
+    d.holes.forEach((p,i)=>{
+      const x=left+(p.x/d.width)*w,y=top+(p.y/d.height)*h;
+      svg.appendChild(svgEl('circle',{cx:x,cy:y,r:7,fill:'#176b43'}));
+      svg.appendChild(svgEl('text',{x:x+(side==='right'?-12:12),y:y-10,'text-anchor':side==='right'?'end':'start','font-size':11,'font-weight':800,fill:'#176b43'},'H'+(i+1)));
+    });
+    dimH(svg,left,left+w,382,'WIDTH '+fmt(d.width,true),top+h,top+h);
+    dimV(svg,top,top+h,left-32,'HEIGHT '+fmt(d.height,true),left,left);
+    if(d.holes.length===2){
+      const a=d.holes[0],b=d.holes[1],x1=left+(a.x/d.width)*w,y1=top+(a.y/d.height)*h,x2=left+(b.x/d.width)*w,y2=top+(b.y/d.height)*h;
+      if(Math.abs(x2-x1)>10)dimH(svg,x1,x2,Math.max(54,top-22),'HOLE SPACING '+fmt(d.holeSpace,true),y1,y2);
+      else dimV(svg,y1,y2,Math.min(946,left+w+54),'HOLE SPACING '+fmt(d.holeSpace,true),x1,x2);
     }
-   svg.appendChild(svgEl('text',{x:500,y:35,'text-anchor':'middle','font-size':10,'font-weight':700,fill:'#667067'},'DRAWING PROPORTIONAL TO '+fmt(d.width,true)+' × '+fmt(d.height,true)));
+    if(d.place!=='center'){
+      const xEdge=side==='right'?left+w:left,xNear=side==='right'?Math.max(...d.holes.map(p=>p.x)):Math.min(...d.holes.map(p=>p.x));
+      const xHole=left+xNear/d.width*w,xOffset=side==='right'?d.width-xNear:xNear;
+      const yEdge=vertical==='bottom'?top+h:top,yNear=vertical==='bottom'?Math.max(...d.holes.map(p=>p.y)):Math.min(...d.holes.map(p=>p.y));
+      const yHole=top+yNear/d.height*h,yOffset=vertical==='bottom'?d.height-yNear:yNear;
+      if(Math.abs(xEdge-xHole)>5)dimH(svg,Math.min(xEdge,xHole),Math.max(xEdge,xHole),top+h+24,side.toUpperCase()+' EDGE '+fmt(xOffset,true),top+h,top+h);
+      if(Math.abs(yEdge-yHole)>5)dimV(svg,Math.min(yEdge,yHole),left-65,vertical.toUpperCase()+' EDGE '+fmt(yOffset,true),left,left);
+    }
+    svg.appendChild(svgEl('text',{x:500,y:35,'text-anchor':'middle','font-size':10,'font-weight':700,fill:'#667067'},'DRAWING PROPORTIONAL TO '+fmt(d.width,true)+' × '+fmt(d.height,true)));
  }
  function calc(){
    const width=Number($('#partWidth').value)||0,height=Number($('#partHeight').value)||0,style=$('#style').value,holeSpace=Number($('#holeSpacing').value)||0,place=$('#placement').value,orient=$('#orientation').value,offX=Number($('#edgeOffsetX').value)||0,offY=Number($('#edgeOffsetY').value)||0;
@@ -175,10 +186,11 @@ if(tool==='hardware'){
    const holes=[];if(style==='knob')holes.push({x:cx,y:cy});else if(orient==='vertical')holes.push({x:cx,y:cy-half},{x:cx,y:cy+half});else holes.push({x:cx-half,y:cy},{x:cx+half,y:cy})
    const invalid=holes.some(p=>p.x<0||p.x>width||p.y<0||p.y>height);
    if(invalid){clearSmartResult('That hardware position does not fit on the cabinet part. Reduce an edge offset or the pull hole spacing.');return}
-   const list=holes.map((p,i)=>({label:style==='knob'?'Knob point':'Hole '+(i+1),main:'X '+fmt(roundMark(p.x),true),sub:'Y '+fmt(roundMark(p.y),true)}));
-   state.data={field:list.map((m,i)=>({counter:(style==='knob'?'POINT ':'HOLE ')+(i+1)+' OF '+list.length,value:m.main,label:m.sub}))};
-   setResults({title:'Cabinet hardware layout',note:'Coordinates are measured from the <strong>left edge</strong> and <strong>top edge</strong> of the part.',a:style==='knob'?'Single point':place,b:list[0]?.main+' / '+list[0]?.sub,c:list[1]?(list[1].main+' / '+list[1].sub):'N/A',marksTitle:'Drill coordinates',marks:list,dimensions:fmt(width,true)+' wide × '+fmt(height,true)+' high',layout:style==='knob'?'Single knob':'Two-hole pull · '+fmt(holeSpace,true)+' spacing'});
-   draw({width,height,holes,holeSpace,place},$('#diagram'));draw({width,height,holes,holeSpace,place},$('#printDiagram'))
+   const side=place.includes('right')?'right':'left',vertical=place.includes('lower')?'bottom':'top';
+    const list=holes.map((p,i)=>({label:style==='knob'?'Knob point':'Hole '+(i+1),main:fmt(roundMark(side==='right'?width-p.x:p.x),true)+' from '+side+' edge',sub:fmt(roundMark(vertical==='bottom'?height-p.y:p.y),true)+' from '+vertical+' edge'}));
+    state.data={field:list.map((m,i)=>({counter:(style==='knob'?'POINT ':'HOLE ')+(i+1)+' OF '+list.length,value:m.main,label:m.sub}))};
+    setResults({title:'Cabinet hardware layout',note:place==='center'?'Centered layout: measurements from left and top edges.':'Measure holes from the <strong>'+side+' edge</strong> and <strong>'+vertical+' edge</strong> of the part.',a:style==='knob'?'Single point':place,b:list[0]?.main+' / '+list[0]?.sub,c:list[1]?(list[1].main+' / '+list[1].sub):'N/A',marksTitle:'Installation marks',marks:list,dimensions:fmt(width,true)+' wide × '+fmt(height,true)+' high',layout:(style==='knob'?'Single knob':'Two-hole pull · '+fmt(holeSpace,true)+' spacing')+' · '+side+' / '+vertical+' edge reference'});
+    draw({width,height,holes,holeSpace,place},$('#diagram'));draw({width,height,holes,holeSpace,place},$('#printDiagram'))
  }
  commonEvents(calc,defaults);defaults();updateUnitLabels();calc()
 }
