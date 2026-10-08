@@ -166,8 +166,16 @@ if(tool==='hardware'){
       const xHole=left+xNear/d.width*w,xOffset=side==='right'?d.width-xNear:xNear;
       const yEdge=vertical==='bottom'?top+h:top,yNear=vertical==='bottom'?Math.max(...d.holes.map(p=>p.y)):Math.min(...d.holes.map(p=>p.y));
       const yHole=top+yNear/d.height*h,yOffset=vertical==='bottom'?d.height-yNear:yNear;
-      if(Math.abs(xEdge-xHole)>5)dimH(svg,Math.min(xEdge,xHole),Math.max(xEdge,xHole),top+h+24,side.toUpperCase()+' EDGE '+fmt(xOffset,true),top+h,top+h);
-      if(Math.abs(yEdge-yHole)>5)dimV(svg,Math.min(yEdge,yHole),left-65,vertical.toUpperCase()+' EDGE '+fmt(yOffset,true),left,left);
+      if(Math.abs(xEdge-xHole)>5){
+        const markY=top+h+24;
+        dimH(svg,Math.min(xEdge,xHole),Math.max(xEdge,xHole),markY,fmt(xOffset,true),top+h,top+h);
+        svg.appendChild(svgEl('text',{x:side==='right'?left+w+32:left-32,y:markY-5,'text-anchor':side==='right'?'start':'end','font-size':10,'font-weight':700,fill:'#405047'},side.toUpperCase()+' EDGE'));
+      }
+      if(Math.abs(yEdge-yHole)>5){
+        const markX=left-84;
+        dimV(svg,Math.min(yEdge,yHole),Math.max(yEdge,yHole),markX,fmt(yOffset,true),left,left);
+        svg.appendChild(svgEl('text',{x:markX-18,y:vertical==='top'?top-15:top+h+18,'text-anchor':'middle','font-size':10,'font-weight':700,fill:'#405047'},vertical.toUpperCase()+' EDGE'));
+      }
     }
     svg.appendChild(svgEl('text',{x:500,y:35,'text-anchor':'middle','font-size':10,'font-weight':700,fill:'#667067'},'DRAWING PROPORTIONAL TO '+fmt(d.width,true)+' × '+fmt(d.height,true)));
  }
