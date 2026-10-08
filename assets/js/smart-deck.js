@@ -62,6 +62,19 @@ function draw(svg){
   if(data.widths.length>2){const i=1,x=left+data.starts[i]*scale,w=data.widths[i]*scale;dimH(svg,x,x+w,64,'FULL BOARD '+fmt(data.widths[i],true),top)}
   if(data.widths.length>1){const x1=left+(data.starts[0]+data.widths[0])*scale,x2=left+data.starts[1]*scale;dimH(svg,x1,x2,322,'GAP '+fmt(data.gap,true),bottom)}
   if(data.widths.length>1){const last=data.widths.length-1,x=left+data.starts[last]*scale,w=data.widths[last]*scale;dimH(svg,x,x+w,350,'END BOARD '+fmt(data.widths[last],true),bottom)}
+ const markValues=data.starts;
+ if(markValues.length){
+   const rows=Math.ceil(markValues.length/4),height=468+rows*25;
+   svg.setAttribute('viewBox','0 0 980 '+height);
+   svg.appendChild(mk('rect',{x:22,y:413,width:936,height:height-425,rx:10,fill:'#f5f8f5',stroke:'#d9e2dc'}));
+   svg.appendChild(mk('text',{x:40,y:438,'font-size':15,'font-weight':800,fill:'#18211a'},'BOARD START MARKS FROM DECK EDGE'));
+   markValues.forEach((value,i)=>{
+     const x=42+(i%4)*231,y=466+Math.floor(i/4)*25;
+     const mark=units==='metric'?fmt(roundMark(value)):fmt(roundMark(value),false);
+     svg.appendChild(mk('text',{x,y,'font-size':12,'font-weight':700,fill:'#26342b'},'#'+(i+1)+'  '+mark));
+   });
+ }
+
 }
 function renderField(){if(!data)return;fieldIndex=Math.max(0,Math.min(fieldIndex,data.starts.length-1));E.fieldCounter.textContent='BOARD '+(fieldIndex+1)+' OF '+data.starts.length;E.fieldValue.textContent=fmt(roundMark(data.starts[fieldIndex]),true);E.fieldLabel.textContent='BOARD START FROM DECK EDGE'}
 function next(d){if(!data)return;fieldIndex=(fieldIndex+d+data.starts.length)%data.starts.length;renderField()}
