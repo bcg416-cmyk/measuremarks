@@ -159,7 +159,7 @@ if(tool==='hardware'){
     if(d.holes.length===2){
       const a=d.holes[0],b=d.holes[1],x1=left+(a.x/d.width)*w,y1=top+(a.y/d.height)*h,x2=left+(b.x/d.width)*w,y2=top+(b.y/d.height)*h;
       if(Math.abs(x2-x1)>10)dimH(svg,x1,x2,Math.max(54,top-22),'HOLE SPACING '+fmt(d.holeSpace,true),y1,y2);
-      else dimV(svg,y1,y2,Math.min(946,left+w+54),'HOLE SPACING '+fmt(d.holeSpace,true),x1,x2);
+      else dimV(svg,y1,y2,Math.min(926,left+w+186),'HOLE SPACING '+fmt(d.holeSpace,true),x1,x2);
     }
     if(d.place!=='center'){
       const xEdge=side==='right'?left+w:left,xNear=side==='right'?Math.max(...d.holes.map(p=>p.x)):Math.min(...d.holes.map(p=>p.x));
@@ -171,11 +171,14 @@ if(tool==='hardware'){
         dimH(svg,Math.min(xEdge,xHole),Math.max(xEdge,xHole),markY,fmt(xOffset,true),top+h,top+h);
         svg.appendChild(svgEl('text',{x:side==='right'?left+w+32:left-32,y:markY-5,'text-anchor':side==='right'?'start':'end','font-size':10,'font-weight':700,fill:'#405047'},side.toUpperCase()+' EDGE'));
       }
-      if(Math.abs(yEdge-yHole)>5){
-        const markX=left-84;
-        dimV(svg,Math.min(yEdge,yHole),Math.max(yEdge,yHole),markX,fmt(yOffset,true),left,left);
-        svg.appendChild(svgEl('text',{x:markX-18,y:vertical==='top'?top-15:top+h+18,'text-anchor':'middle','font-size':10,'font-weight':700,fill:'#405047'},vertical.toUpperCase()+' EDGE'));
-      }
+      // Independently locate every hole from the selected top/bottom edge.
+      // Use separate dimension tracks so Hole 1, Hole 2 and their spacing remain legible.
+      const sorted=d.holes.map((p,i)=>({y:top+p.y/d.height*h,value:vertical==='bottom'?d.height-p.y:p.y,index:i})).sort((a,b)=>a.value-b.value);
+      sorted.forEach((hole,i)=>{
+        if(Math.abs(hole.y-yEdge)<5)return;
+        const dimensionX=Math.min(910,left+w+62+i*55);
+        dimV(svg,Math.min(yEdge,hole.y),Math.max(yEdge,hole.y),dimensionX,'H'+(hole.index+1)+' '+fmt(hole.value,true),left+w,left+w);
+      });
     }
     svg.appendChild(svgEl('text',{x:500,y:35,'text-anchor':'middle','font-size':10,'font-weight':700,fill:'#667067'},'DRAWING PROPORTIONAL TO '+fmt(d.width,true)+' × '+fmt(d.height,true)));
  }
