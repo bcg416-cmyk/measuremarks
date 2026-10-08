@@ -53,4 +53,17 @@ else if(type==='lights'){
 }
 else if(type==='tile'){const top=120,h=180;s.appendChild(E('rect',{x:left,y:top,width:right-left,height:h,fill:'#f1eee7',stroke:'#cfc9bc'}));d.centers.forEach((c,i)=>{const x=left+(c-d.width/2)*scale,w=Math.max(8,d.width*scale);for(let r=0;r<3;r++)s.appendChild(E('rect',{x,y:top+r*h/3,width:w,height:h/3,fill:(i+r)%2?'#ddd7ca':'#ebe5d9',stroke:'#aaa293'}))});nums(s,d,left,scale,344);dims(s,d,left,right,scale,'Tile')}
 else if(type==='pictures'){s.appendChild(E('rect',{x:left,y:112,width:right-left,height:196,rx:4,fill:'#f2efe8',stroke:'#d4cec1'}));d.centers.forEach((c,i)=>{const w=Math.max(28,d.width*scale),x=left+c*scale-w/2,h=i%2?90:116,y=210-h/2;s.appendChild(E('rect',{x,y,width:w,height:h,fill:'#fff',stroke:'#5d5549','stroke-width':5}));s.appendChild(E('rect',{x:x+9,y:y+9,width:Math.max(8,w-18),height:Math.max(8,h-18),fill:'#dbe5df'}))});nums(s,d,left,scale,344);dims(s,d,left,right,scale,'Frame')}
-else{s.appendChild(E('rect',{x:left,y:174,width:right-left,height:54,rx:14,fill:'#eef2ed',stroke:'#cbd4cb'}));d.centers.forEach(c=>s.appendChild(E('rect',{x:left+(c-d.width/2)*scale,y:142,width:Math.max(12,d.width*scale),height:86,rx:9,fill:'#176b43'})));nums(s,d,left,scale,344);dims(s,d,left,right,scale,'Item')}}
+else{s.appendChild(E('rect',{x:left,y:174,width:right-left,height:54,rx:14,fill:'#eef2ed',stroke:'#cbd4cb'}));d.centers.forEach(c=>s.appendChild(E('rect',{x:left+(c-d.width/2)*scale,y:142,width:Math.max(12,d.width*scale),height:86,rx:9,fill:'#176b43'})));nums(s,d,left,scale,344);dims(s,d,left,right,scale,'Item')}
+
+const marks=d.centers||[];
+if(marks.length){
+ const rows=Math.ceil(marks.length/4),height=468+rows*25;
+ s.setAttribute('viewBox','0 0 980 '+height);
+ s.appendChild(E('rect',{x:22,y:413,width:936,height:height-425,rx:10,fill:'#f5f8f5',stroke:'#d9e2dc'}));
+ T(s,40,438,'CENTER MARKS FROM STARTING EDGE',15,800,'start');
+ marks.forEach((value,i)=>{
+   const x=42+(i%4)*231,y=466+Math.floor(i/4)*25;
+   T(s,x,y,'#'+(i+1)+'  '+formatValue(value,d.units,d.precision),12,700,'start');
+ });
+}
+}

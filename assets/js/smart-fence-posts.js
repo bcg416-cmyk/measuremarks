@@ -33,6 +33,19 @@ function draw(svg){
  dimH(svg,left,right,380,'TOTAL '+fmt(data.run,true),300);
  if(data.centers.length>1){const x1=left+data.centers[0]*scale,x2=left+data.centers[1]*scale;dimH(svg,x1,x2,72,'C/C '+fmt(data.spacing,true),100);const e1=x1+data.width*scale/2,e2=x2-data.width*scale/2;dimH(svg,e1,e2,96,'CLEAR '+fmt(data.clear,true),110)}
  if(data.flush){const x=left+data.centers[0]*scale,w=data.width*scale;dimH(svg,x-w/2,x+w/2,350,'POST '+fmt(data.width,true),292)}
+ const markValues=data.marks;
+ if(markValues.length){
+   const rows=Math.ceil(markValues.length/4),height=468+rows*25;
+   svg.setAttribute('viewBox','0 0 980 '+height);
+   svg.appendChild(mk('rect',{x:22,y:413,width:936,height:height-425,rx:10,fill:'#f5f8f5',stroke:'#d9e2dc'}));
+   svg.appendChild(mk('text',{x:40,y:438,'font-size':15,'font-weight':800,fill:'#18211a'},'POST CENTER MARKS FROM START EDGE'));
+   markValues.forEach((value,i)=>{
+     const x=42+(i%4)*231,y=466+Math.floor(i/4)*25;
+     const mark=units==='metric'?fmt(roundMark(value)):fmt(roundMark(value),false);
+     svg.appendChild(mk('text',{x,y,'font-size':12,'font-weight':700,fill:'#26342b'},'#'+(i+1)+'  '+mark));
+   });
+ }
+
 }
 function renderField(){if(!data)return;E.fieldCounter.textContent='POST '+(fieldIndex+1)+' OF '+data.marks.length;E.fieldValue.textContent=fmt(data.marks[fieldIndex],true);E.fieldLabel.textContent='POST CENTER'}
 function next(d){if(!data)return;fieldIndex=(fieldIndex+d+data.marks.length)%data.marks.length;renderField()}

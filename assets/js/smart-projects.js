@@ -56,6 +56,19 @@ function setResults({title,note,a,b,c,marksTitle,marks,dimensions,layout}){$('#r
 function renderField(){if(!state.data?.field?.length)return;const f=state.data.field[state.fieldIndex];$('#fieldCounter').textContent=f.counter||('MARK '+(state.fieldIndex+1)+' OF '+state.data.field.length);$('#fieldValue').textContent=f.value;$('#fieldLabel').textContent=f.label}
 function stepField(d){if(!state.data?.field?.length)return;state.fieldIndex=(state.fieldIndex+d+state.data.field.length)%state.data.field.length;renderField()}
 function commonEvents(calc,defaults){document.querySelectorAll('.seg').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.seg').forEach(x=>x.classList.remove('active'));b.classList.add('active');state.units=b.dataset.units;defaults();syncSpanMode();updateUnitLabels();calc()}));$('#spanMode')?.addEventListener('change',()=>{syncSpanMode();calc()});document.querySelectorAll('.controls input,.controls select').forEach(x=>{x.addEventListener('input',calc);x.addEventListener('change',calc)});$('#calculate')?.addEventListener('click',calc);document.querySelectorAll('.print-button').forEach(b=>b.addEventListener('click',()=>window.print()));$('#openField')?.addEventListener('click',()=>{if(state.data){$('#fieldOverlay').hidden=false;state.fieldIndex=0;renderField()}});$('#closeField')?.addEventListener('click',()=>$('#fieldOverlay').hidden=true);$('#prevMark')?.addEventListener('click',()=>stepField(-1));$('#nextMark')?.addEventListener('click',()=>stepField(1));$('#mobileField')?.addEventListener('click',()=>$('#openField')?.click());$('#mobilePrint')?.addEventListener('click',()=>window.print())}
+/* Installation marks use inches, even past 12; overall imperial dimensions use feet and inches. */
+function markFmt(v){return state.units==='metric'?fmt(roundMark(v)):frac(roundMark(v),Number($('#precision')?.value||16))}
+function blueprintMarkSchedule(svg,title,marks){
+ if(!svg||!marks.length)return;
+ const columns=4,rowHeight=25,rows=Math.ceil(marks.length/columns),totalHeight=468+rows*rowHeight;
+ svg.setAttribute('viewBox','0 0 980 '+totalHeight);
+ svg.appendChild(svgEl('rect',{x:22,y:413,width:936,height:totalHeight-425,rx:10,fill:'#f5f8f5',stroke:'#d9e2dc'}));
+ svg.appendChild(svgEl('text',{x:40,y:438,'font-size':15,'font-weight':800,fill:'#18211a'},title));
+ marks.forEach((mark,i)=>{const x=42+(i%columns)*231,y=466+Math.floor(i/columns)*rowHeight;
+  svg.appendChild(svgEl('text',{x,y,'font-size':12,'font-weight':700,fill:'#26342b'},mark));
+ });
+}
+
 function drawLinear(type,d,svg){
   baseSvg(svg,d.title);const left=86,right=920,scale=(right-left)/d.span;
   if(type==='fence'){[145,255].forEach(y=>svg.appendChild(svgEl('rect',{x:left-8,y,width:right-left+16,height:14,rx:4,fill:'#af8b61'})))}
@@ -72,13 +85,14 @@ function drawLinear(type,d,svg){
     if(firstLeft-left>7)dimH(svg,left,firstLeft,340,'EDGE '+fmt(d.edgeGap,true),300,300);
   }
   if(d.width*scale>18){const c=left+d.centers[0]*scale;dimH(svg,c-d.width*scale/2,c+d.width*scale/2,325,'WIDTH '+fmt(d.width,true),290,290)}
+  blueprintMarkSchedule(svg,(type==='fence'?'PICKET':type==='balusters'?'BALUSTER':type==='batten'?'BATTEN':type==='wainscot'?'STILE':'SLAT')+' CENTER MARKS FROM LEFT EDGE',d.centers.map((v,i)=>'#'+(i+1)+'  '+markFmt(v)));
 }
 
 // Fence pickets / balusters
 if(tool==='fence'||tool==='balusters'){
  const item=tool==='fence'?'Picket':'Baluster';
  function defaults(){if(state.units==='imperial'){setSpan(tool==='fence'?96:36);$('#itemWidth').value=tool==='fence'?3.5:1.5;$('#maxGap').value=tool==='fence'?3:4;$('#spanMode').value='feet'}else{$('#span').value=tool==='fence'?2438:914;$('#itemWidth').value=tool==='fence'?89:38;$('#maxGap').value=tool==='fence'?76:102;$('#spanMode').value='inches'}updateUnitLabels()}
- function calc(){const s=span(),w=Number($('#itemWidth').value)||0,maxGap=Number($('#maxGap').value)||0,mode=$('#edgeMode').value;if(!(s>0)||!(w>0)||maxGap<0||s<=w){$('#resultNote').textContent='Check the dimensions and maximum gap.';return}let n=2,gap;while(n<500){gap=mode==='flush'?(s-n*w)/(n-1):(s-n*w)/(n+1);if(gap>=0&&gap<=maxGap+1e-8)break;n++}gap=mode==='flush'?(s-n*w)/(n-1):(s-n*w)/(n+1);const edgeGap=mode==='flush'?0:gap,first=mode==='flush'?w/2:gap+w/2,step=w+gap,centers=Array.from({length:n},(_,i)=>first+i*step);const list=centers.map((v,i)=>({label:item+' '+(i+1),main:fmt(roundMark(v),true)}));state.data={field:list.map((m,i)=>({counter:item.toUpperCase()+' '+(i+1)+' OF '+n,value:m.main,label:item.toUpperCase()+' CENTER'}))};setResults({title:item+' layout',note:'Use <strong>'+n+' '+item.toLowerCase()+'s</strong> to keep the finished clear gap at or below <strong>'+fmt(maxGap,true)+'</strong>.',a:n,b:fmt(gap,true),c:fmt(step,true),marksTitle:item+' center marks',marks:list,dimensions:fmt(s,true)+' opening · '+fmt(w,true)+' '+item.toLowerCase()+' width',layout:n+' '+item.toLowerCase()+'s · '+fmt(gap,true)+' actual gap'});const d={span:s,width:w,centers,step,gap,edgeGap,title:item+' layout'};drawLinear(tool,d,$('#diagram'));drawLinear(tool,d,$('#printDiagram'))}
+ function calc(){const s=span(),w=Number($('#itemWidth').value)||0,maxGap=Number($('#maxGap').value)||0,mode=$('#edgeMode').value;if(!(s>0)||!(w>0)||maxGap<0||s<=w){$('#resultNote').textContent='Check the dimensions and maximum gap.';return}let n=2,gap;while(n<500){gap=mode==='flush'?(s-n*w)/(n-1):(s-n*w)/(n+1);if(gap>=0&&gap<=maxGap+1e-8)break;n++}gap=mode==='flush'?(s-n*w)/(n-1):(s-n*w)/(n+1);const edgeGap=mode==='flush'?0:gap,first=mode==='flush'?w/2:gap+w/2,step=w+gap,centers=Array.from({length:n},(_,i)=>first+i*step);const list=centers.map((v,i)=>({label:item+' '+(i+1),main:markFmt(v)}));state.data={field:list.map((m,i)=>({counter:item.toUpperCase()+' '+(i+1)+' OF '+n,value:m.main,label:item.toUpperCase()+' CENTER'}))};setResults({title:item+' layout',note:'Use <strong>'+n+' '+item.toLowerCase()+'s</strong> to keep the finished clear gap at or below <strong>'+fmt(maxGap,true)+'</strong>.',a:n,b:fmt(gap,true),c:fmt(step,true),marksTitle:item+' center marks',marks:list,dimensions:fmt(s,true)+' opening · '+fmt(w,true)+' '+item.toLowerCase()+' width',layout:n+' '+item.toLowerCase()+'s · '+fmt(gap,true)+' actual gap'});const d={span:s,width:w,centers,step,gap,edgeGap,title:item+' layout'};drawLinear(tool,d,$('#diagram'));drawLinear(tool,d,$('#printDiagram'))}
  commonEvents(calc,defaults);defaults();syncSpanMode();updateUnitLabels();calc()
 }
 
@@ -87,7 +101,7 @@ if(['batten','wainscot','slats'].includes(tool)){
  const cfg={batten:{name:'Board & Batten',item:'Batten',desired:'panel opening',span:144,width:2.5,target:18,count:8},wainscot:{name:'Wainscoting',item:'Stile',desired:'panel opening',span:144,width:2.5,target:20,count:7},slats:{name:'Slatwall',item:'Slat',desired:'gap',span:120,width:1.5,target:1.5,count:12}}[tool];
  function syncMode(){const count=$('#calcMode').value==='count';$('#countWrap').classList.toggle('hidden',!count);$('#desiredWrap').classList.toggle('hidden',count)}
  function defaults(){if(state.units==='imperial'){setSpan(cfg.span);$('#itemWidth').value=cfg.width;$('#desired').value=cfg.target;$('#count').value=cfg.count;$('#spanMode').value='feet'}else{$('#span').value=Math.round(cfg.span*25.4);$('#itemWidth').value=Math.round(cfg.width*25.4);$('#desired').value=Math.round(cfg.target*25.4);$('#count').value=cfg.count;$('#spanMode').value='inches'}syncMode();updateUnitLabels()}
- function calc(){syncMode();const s=span(),w=Number($('#itemWidth').value)||0,useCount=$('#calcMode').value==='count',target=Number($('#desired').value)||0;let n=useCount?Math.max(2,Math.floor(Number($('#count').value)||2)):Math.max(2,Math.round((s+target)/(w+target)));const equalEdges=$('#edgeMode').value==='edge';let gaps=equalEdges?n+1:n-1,gap=(s-n*w)/gaps;while(gap<0&&n>2){n--;gaps=equalEdges?n+1:n-1;gap=(s-n*w)/gaps}const edgeGap=equalEdges?gap:0,first=equalEdges?gap+w/2:w/2,step=w+gap,centers=Array.from({length:n},(_,i)=>first+i*step);const list=centers.map((v,i)=>({label:cfg.item+' '+(i+1),main:fmt(roundMark(v),true)}));state.data={field:list.map((m,i)=>({counter:cfg.item.toUpperCase()+' '+(i+1)+' OF '+n,value:m.main,label:cfg.item.toUpperCase()+' CENTER'}))};setResults({title:cfg.name+' layout',note:'Use <strong>'+n+' '+cfg.item.toLowerCase()+'s</strong> with an actual '+cfg.desired+' of <strong>'+fmt(gap,true)+'</strong>.',a:n,b:fmt(gap,true),c:fmt(step,true),marksTitle:cfg.item+' center marks',marks:list,dimensions:fmt(s,true)+' wall · '+fmt(w,true)+' '+cfg.item.toLowerCase()+' width',layout:n+' '+cfg.item.toLowerCase()+'s · '+fmt(gap,true)+' '+cfg.desired});const d={span:s,width:w,centers,step,gap,edgeGap,title:cfg.name+' layout'};drawLinear(tool,d,$('#diagram'));drawLinear(tool,d,$('#printDiagram'))}
+ function calc(){syncMode();const s=span(),w=Number($('#itemWidth').value)||0,useCount=$('#calcMode').value==='count',target=Number($('#desired').value)||0;let n=useCount?Math.max(2,Math.floor(Number($('#count').value)||2)):Math.max(2,Math.round((s+target)/(w+target)));const equalEdges=$('#edgeMode').value==='edge';let gaps=equalEdges?n+1:n-1,gap=(s-n*w)/gaps;while(gap<0&&n>2){n--;gaps=equalEdges?n+1:n-1;gap=(s-n*w)/gaps}const edgeGap=equalEdges?gap:0,first=equalEdges?gap+w/2:w/2,step=w+gap,centers=Array.from({length:n},(_,i)=>first+i*step);const list=centers.map((v,i)=>({label:cfg.item+' '+(i+1),main:markFmt(v)}));state.data={field:list.map((m,i)=>({counter:cfg.item.toUpperCase()+' '+(i+1)+' OF '+n,value:m.main,label:cfg.item.toUpperCase()+' CENTER'}))};setResults({title:cfg.name+' layout',note:'Use <strong>'+n+' '+cfg.item.toLowerCase()+'s</strong> with an actual '+cfg.desired+' of <strong>'+fmt(gap,true)+'</strong>.',a:n,b:fmt(gap,true),c:fmt(step,true),marksTitle:cfg.item+' center marks',marks:list,dimensions:fmt(s,true)+' wall · '+fmt(w,true)+' '+cfg.item.toLowerCase()+' width',layout:n+' '+cfg.item.toLowerCase()+'s · '+fmt(gap,true)+' '+cfg.desired});const d={span:s,width:w,centers,step,gap,edgeGap,title:cfg.name+' layout'};drawLinear(tool,d,$('#diagram'));drawLinear(tool,d,$('#printDiagram'))}
  commonEvents(calc,defaults);defaults();syncSpanMode();updateUnitLabels();calc()
 }
 
@@ -123,13 +137,14 @@ if(tool==='pictures'){
    const firstLeft=left+(d.centers[0]-d.frames[0].w/2)*xS;if(firstLeft-left>5)dimH(svg,left,firstLeft,350,'MARGIN '+fmt(d.outside,true),bottom,bottom);
    dimV(svg,bottom,bottom-d.centerH*yS,70,'CENTER '+fmt(d.centerH,true),left,left);
    dimV(svg,bottom,bottom-d.hookHeights[0]*yS,42,'HOOK '+fmt(d.hookHeights[0],true),left,left);
+    blueprintMarkSchedule(svg,'PICTURE HOOK MARKS (X FROM LEFT · Y FROM FLOOR)',d.centers.map((x,i)=>'#'+(i+1)+'  X '+markFmt(x)+' / Y '+markFmt(d.hookHeights[i])));
  }
  function calc(){
    if($('#frameMode')?.value==='custom'&&document.querySelectorAll('.custom-frame-row').length!==Math.max(1,Math.min(12,Math.floor(Number($('#count').value)||1))))renderCustomRows();
    const wall=span(),fr=frames(),gap=Number($('#gap').value)||0,centerH=Number($('#centerHeight').value)||0,total=fr.reduce((a,x)=>a+x.w,0)+gap*(fr.length-1);
    if(!(wall>0)||fr.some(x=>!(x.w>0)||!(x.h>0))||total>wall){$('#resultNote').textContent='Check the wall and frame dimensions. The arrangement must fit on the wall.';return}
    const outside=(wall-total)/2,centers=[];let cursor=outside;fr.forEach((x,i)=>{centers.push(cursor+x.w/2);cursor+=x.w+(i<fr.length-1?gap:0)});
-   const hookHeights=fr.map(x=>centerH+x.h/2-x.hook),list=centers.map((v,i)=>({label:'Frame '+(i+1)+' hook',main:'X '+fmt(roundMark(v),true),sub:'Y '+fmt(roundMark(hookHeights[i]),true)}));
+   const hookHeights=fr.map(x=>centerH+x.h/2-x.hook),list=centers.map((v,i)=>({label:'Frame '+(i+1)+' hook',main:'X '+markFmt(v),sub:'Y '+markFmt(hookHeights[i])}));
    state.data={field:list.map((m,i)=>({counter:'FRAME '+(i+1)+' OF '+fr.length,value:m.main,label:m.sub}))};
    setResults({title:'Picture hanging layout',note:'The group is centered on the wall with <strong>'+fmt(outside,true)+'</strong> outside margins. Each frame can have its own size and hook offset.',a:fmt(outside,true),b:fr.length===1?fmt(hookHeights[0],true):'Varies by frame',c:fmt(centerH,true),marksTitle:'Hook coordinates from left wall / floor',marks:list,dimensions:fmt(wall,true)+' wall · '+fr.length+' frame'+(fr.length===1?'':'s'),layout:fmt(gap,true)+' gap · '+fmt(centerH,true)+' common frame-center height'});
    const d={wall,frames:fr,gap,centerH,outside,centers,hookHeights};draw(d,$('#diagram'));draw(d,$('#printDiagram'))
@@ -148,25 +163,100 @@ if(tool==='hardware'){
    svg.appendChild(svgEl('rect',{x:left,y:top,width:w,height:h,rx:5,fill:'#f4f0e8',stroke:'#a99d89','stroke-width':2}));
    svg.appendChild(svgEl('line',{x1:left+w/2,y1:top,x2:left+w/2,y2:top+h,stroke:'#c7cfc9','stroke-width':1,'stroke-dasharray':'5 5'}));
    svg.appendChild(svgEl('line',{x1:left,y1:top+h/2,x2:left+w,y2:top+h/2,stroke:'#c7cfc9','stroke-width':1,'stroke-dasharray':'5 5'}));
-   d.holes.forEach((p,i)=>{const x=left+(p.x/d.width)*w,y=top+(p.y/d.height)*h;svg.appendChild(svgEl('circle',{cx:x,cy:y,r:7,fill:'#176b43'}));svg.appendChild(svgEl('text',{x:x+10,y:y-8,'font-size':10,'font-weight':800,fill:'#176b43'},'H'+(i+1)));svg.appendChild(svgEl('text',{x:x+10,y:y+8,'font-size':9,fill:'#405047'},'X '+fmt(p.x,true)+' / Y '+fmt(p.y,true)))});
-   dimH(svg,left,left+w,382,'WIDTH '+fmt(d.width,true),top+h,top+h);dimV(svg,top,top+h,left-32,'HEIGHT '+fmt(d.height,true),left,left);
-   if(d.holes.length===2){const a=d.holes[0],b=d.holes[1],x1=left+(a.x/d.width)*w,y1=top+(a.y/d.height)*h,x2=left+(b.x/d.width)*w,y2=top+(b.y/d.height)*h;if(Math.abs(x2-x1)>10)dimH(svg,x1,x2,Math.max(54,top-22),'HOLES '+fmt(d.holeSpace,true),y1,y2);else dimV(svg,y1,y2,Math.min(946,left+w+32),'HOLES '+fmt(d.holeSpace,true),x1,x2)}
-   svg.appendChild(svgEl('text',{x:500,y:35,'text-anchor':'middle','font-size':10,'font-weight':700,fill:'#667067'},'DRAWING PROPORTIONAL TO '+fmt(d.width,true)+' × '+fmt(d.height,true)));
+   const side=d.place.includes('right')?'right':'left', vertical=d.place.includes('lower')?'bottom':'top';
+    d.holes.forEach((p,i)=>{
+      const x=left+(p.x/d.width)*w,y=top+(p.y/d.height)*h;
+      svg.appendChild(svgEl('circle',{cx:x,cy:y,r:7,fill:'#176b43'}));
+      svg.appendChild(svgEl('text',{x:x+(side==='right'?-12:12),y:y-10,'text-anchor':side==='right'?'end':'start','font-size':11,'font-weight':800,fill:'#176b43'},'H'+(i+1)));
+    });
+    dimH(svg,left,left+w,382,'WIDTH '+fmt(d.width,true),top+h,top+h);
+    dimV(svg,top,top+h,left-32,'HEIGHT '+fmt(d.height,true),left,left);
+    if(d.holes.length===2){
+      const a=d.holes[0],b=d.holes[1],x1=left+(a.x/d.width)*w,y1=top+(a.y/d.height)*h,x2=left+(b.x/d.width)*w,y2=top+(b.y/d.height)*h;
+      if(Math.abs(x2-x1)>10)dimH(svg,x1,x2,Math.max(54,top-22),'HOLE SPACING '+fmt(d.holeSpace,true),y1,y2);
+      else dimV(svg,y1,y2,Math.min(926,left+w+186),'HOLE SPACING '+fmt(d.holeSpace,true),x1,x2);
+    }
+    if(d.place!=='center'){
+      const xEdge=side==='right'?left+w:left,xNear=side==='right'?Math.max(...d.holes.map(p=>p.x)):Math.min(...d.holes.map(p=>p.x));
+      const xHole=left+xNear/d.width*w,xOffset=side==='right'?d.width-xNear:xNear;
+      const yEdge=vertical==='bottom'?top+h:top,yNear=vertical==='bottom'?Math.max(...d.holes.map(p=>p.y)):Math.min(...d.holes.map(p=>p.y));
+      const yHole=top+yNear/d.height*h,yOffset=vertical==='bottom'?d.height-yNear:yNear;
+      if(Math.abs(xEdge-xHole)>5){
+        const markY=top+h+24;
+        dimH(svg,Math.min(xEdge,xHole),Math.max(xEdge,xHole),markY,fmt(xOffset,true),top+h,top+h);
+        svg.appendChild(svgEl('text',{x:side==='right'?left+w+32:left-32,y:markY-5,'text-anchor':side==='right'?'start':'end','font-size':10,'font-weight':700,fill:'#405047'},side.toUpperCase()+' EDGE'));
+      }
+      // Independently locate every hole from the selected top/bottom edge.
+      // Use separate dimension tracks so Hole 1, Hole 2 and their spacing remain legible.
+      const sorted=d.holes.map((p,i)=>({y:top+p.y/d.height*h,value:vertical==='bottom'?d.height-p.y:p.y,index:i})).sort((a,b)=>a.value-b.value);
+      sorted.forEach((hole,i)=>{
+        if(Math.abs(hole.y-yEdge)<5)return;
+        const dimensionX=Math.min(910,left+w+62+i*55);
+        dimV(svg,Math.min(yEdge,hole.y),Math.max(yEdge,hole.y),dimensionX,'H'+(hole.index+1)+' '+fmt(hole.value,true),left+w,left+w);
+      });
+    }
+    // Centered layouts must show each drill mark measured from an actual part edge.
+     if(d.place==='center'){
+       if(d.holes.length===2 && Math.abs(d.holes[0].x-d.holes[1].x)>1e-6){
+         d.holes.forEach((p,i)=>{
+           const hx=left+p.x/d.width*w,trackY=top+h+25+i*26;
+           dimH(svg,left,hx,trackY,'H'+(i+1)+' '+fmt(p.x,true),top+h,top+h);
+         });
+         const hy=top+d.holes[0].y/d.height*h;
+         if(hy-top>5)dimV(svg,top,hy,left-66,'TOP '+fmt(d.holes[0].y,true),left,left);
+       }else{
+         d.holes.forEach((p,i)=>{
+           const hy=top+p.y/d.height*h;
+           if(hy-top>5)dimV(svg,top,hy,Math.min(925,left+w+65+i*62),'H'+(i+1)+' '+fmt(p.y,true),left+w,left+w);
+         });
+         const hx=left+d.holes[0].x/d.width*w;
+         if(hx-left>5)dimH(svg,left,hx,top+h+25,'LEFT '+fmt(d.holes[0].x,true),top+h,top+h);
+       }
+     }
+     svg.appendChild(svgEl('text',{x:500,y:35,'text-anchor':'middle','font-size':10,'font-weight':700,fill:'#667067'},'DRAWING PROPORTIONAL TO '+fmt(d.width,true)+' × '+fmt(d.height,true)));
+ }
+ function showHardwareFitWarning(width,height,message){
+   clearSmartResult(message);
+   const svg=$('#diagram');
+   if(!svg||!(width>0)||!(height>0))return;
+   baseSvg(svg,'Cabinet hardware — layout does not fit');
+   const scale=Math.min(500/width,230/height),w=Math.max(65,width*scale),h=Math.max(45,height*scale),left=490-w/2,top=186-h/2;
+   svg.appendChild(svgEl('rect',{x:left,y:top,width:w,height:h,rx:5,fill:'#f4f0e8',stroke:'#ae7b67','stroke-width':2}));
+   dimH(svg,left,left+w,366,'WIDTH '+fmt(width,true),top+h,top+h);
+   dimV(svg,top,top+h,left-34,'HEIGHT '+fmt(height,true),left,left);
+   svg.appendChild(svgEl('text',{x:490,y:47,'text-anchor':'middle','font-size':15,'font-weight':800,fill:'#a13d2f'},'NO VALID DRILL MARKS'));
+   svg.appendChild(svgEl('text',{x:490,y:67,'text-anchor':'middle','font-size':11,fill:'#405047'},'Adjust placement, orientation, or spacing to fit this part.'));
  }
  function calc(){
    const width=Number($('#partWidth').value)||0,height=Number($('#partHeight').value)||0,style=$('#style').value,holeSpace=Number($('#holeSpacing').value)||0,place=$('#placement').value,orient=$('#orientation').value,offX=Number($('#edgeOffsetX').value)||0,offY=Number($('#edgeOffsetY').value)||0;
    if(!(width>0)||!(height>0)){clearSmartResult('Enter a part width and height greater than zero.');return}
    if(offX<0||offY<0||offX>width||offY>height){clearSmartResult('Edge offsets must stay within the cabinet part.');return}
    if(style==='pull'&&!(holeSpace>0)){clearSmartResult('Enter a pull hole spacing greater than zero.');return}
+   // Offsets locate the nearest mounting hole; the other hole extends inward.
+   const half=style==='pull'?holeSpace/2:0;
    let cx=width/2,cy=height/2;
-   if(place.includes('right'))cx=width-offX;if(place.includes('left'))cx=offX;if(place.includes('upper'))cy=offY;if(place.includes('lower'))cy=height-offY;
-   const holes=[];if(style==='knob')holes.push({x:cx,y:cy});else{const h=holeSpace/2;if(orient==='vertical')holes.push({x:cx,y:cy-h},{x:cx,y:cy+h});else holes.push({x:cx-h,y:cy},{x:cx+h,y:cy})}
+   if(place.includes('right'))cx=width-offX-(style==='pull'&&orient==='horizontal'?half:0);
+   if(place.includes('left'))cx=offX+(style==='pull'&&orient==='horizontal'?half:0);
+   if(place.includes('upper'))cy=offY+(style==='pull'&&orient==='vertical'?half:0);
+   if(place.includes('lower'))cy=height-offY-(style==='pull'&&orient==='vertical'?half:0);
+   const holes=[];if(style==='knob')holes.push({x:cx,y:cy});else if(orient==='vertical')holes.push({x:cx,y:cy-half},{x:cx,y:cy+half});else holes.push({x:cx-half,y:cy},{x:cx+half,y:cy})
    const invalid=holes.some(p=>p.x<0||p.x>width||p.y<0||p.y>height);
-   if(invalid){clearSmartResult('That hardware position does not fit on the cabinet part. Reduce an edge offset or the pull hole spacing.');return}
-   const list=holes.map((p,i)=>({label:style==='knob'?'Knob point':'Hole '+(i+1),main:'X '+fmt(roundMark(p.x),true),sub:'Y '+fmt(roundMark(p.y),true)}));
-   state.data={field:list.map((m,i)=>({counter:(style==='knob'?'POINT ':'HOLE ')+(i+1)+' OF '+list.length,value:m.main,label:m.sub}))};
-   setResults({title:'Cabinet hardware layout',note:'Coordinates are measured from the <strong>left edge</strong> and <strong>top edge</strong> of the part.',a:style==='knob'?'Single point':place,b:list[0]?.main+' / '+list[0]?.sub,c:list[1]?(list[1].main+' / '+list[1].sub):'N/A',marksTitle:'Drill coordinates',marks:list,dimensions:fmt(width,true)+' wide × '+fmt(height,true)+' high',layout:style==='knob'?'Single knob':'Two-hole pull · '+fmt(holeSpace,true)+' spacing'});
-   draw({width,height,holes,holeSpace},$('#diagram'));draw({width,height,holes,holeSpace},$('#printDiagram'))
+   if(invalid){
+     let message='That hardware position does not fit on this part.';
+     if(style==='pull'&&orient==='vertical'&&(place.includes('upper')||place.includes('lower'))&&offY+holeSpace>height){
+       message='A '+fmt(holeSpace,true)+' vertical pull with a '+fmt(offY,true)+' '+(place.includes('upper')?'top':'bottom')+' offset needs at least '+fmt(offY+holeSpace,true)+' of part height. Choose Horizontal or Centered, or reduce the offset / pull spacing.';
+     }else if(style==='pull'&&orient==='horizontal'&&(place.includes('left')||place.includes('right'))&&offX+holeSpace>width){
+       message='A '+fmt(holeSpace,true)+' horizontal pull with a '+fmt(offX,true)+' '+(place.includes('right')?'right':'left')+' offset needs at least '+fmt(offX+holeSpace,true)+' of part width. Choose Vertical or Centered, or reduce the offset / pull spacing.';
+     }else{
+       message+=' Try Centered placement, change the pull orientation, or reduce the offsets / hole spacing.';
+     }
+     showHardwareFitWarning(width,height,message);return
+   }
+   const side=place.includes('right')?'right':'left',vertical=place.includes('lower')?'bottom':'top';
+    const list=holes.map((p,i)=>({label:style==='knob'?'Knob point':'Hole '+(i+1),main:fmt(roundMark(side==='right'?width-p.x:p.x),true)+' from '+side+' edge',sub:fmt(roundMark(vertical==='bottom'?height-p.y:p.y),true)+' from '+vertical+' edge'}));
+    state.data={field:list.map((m,i)=>({counter:(style==='knob'?'POINT ':'HOLE ')+(i+1)+' OF '+list.length,value:m.main,label:m.sub}))};
+    setResults({title:'Cabinet hardware layout',note:place==='center'?'Centered layout: measurements from left and top edges.':'Measure holes from the <strong>'+side+' edge</strong> and <strong>'+vertical+' edge</strong> of the part.',a:style==='knob'?'Single point':place,b:list[0]?.main+' / '+list[0]?.sub,c:list[1]?(list[1].main+' / '+list[1].sub):'N/A',marksTitle:'Installation marks',marks:list,dimensions:fmt(width,true)+' wide × '+fmt(height,true)+' high',layout:(style==='knob'?'Single knob':'Two-hole pull · '+fmt(holeSpace,true)+' spacing')+' · '+side+' / '+vertical+' edge reference'});
+    draw({width,height,holes,holeSpace,place},$('#diagram'));draw({width,height,holes,holeSpace,place},$('#printDiagram'))
  }
  commonEvents(calc,defaults);defaults();updateUnitLabels();calc()
 }
@@ -185,6 +275,7 @@ if(tool==='lights'){
    if(d.rows>1){const p1=d.points[0],p2=d.points[d.cols];dimV(svg,top+p1.y*yS,top+p2.y*yS,935,'ROW '+fmt(d.yStep,true),left,left)}
    if(d.points.length){const p=d.points[0];dimH(svg,left,left+p.x*xS,347,'WALL '+fmt(p.x,true),bottom,bottom);dimV(svg,top,top+p.y*yS,132,'WALL '+fmt(p.y,true),left,left)}
    svg.appendChild(svgEl('text',{x:500,y:35,'text-anchor':'middle','font-size':10,'font-weight':700,fill:'#667067'},'FIXTURE DIAMETER '+fmt(d.fixture,true)+' · DRAWN TO ROOM SCALE'));
+    blueprintMarkSchedule(svg,'LIGHT CENTER MARKS (X FROM LEFT · Y FROM TOP)',d.points.map((p,i)=>'#'+(i+1)+'  X '+markFmt(p.x)+' / Y '+markFmt(p.y)));
  }
  function calc(){
    syncOffset();const length=span(),width=Number($('#roomWidth').value)||0,fixture=Number($('#fixture').value)||0,rows=Math.max(1,Math.floor(Number($('#rows').value)||1)),cols=Math.max(1,Math.floor(Number($('#cols').value)||1)),mode=$('#edgeMode').value,fixed=Number($('#wallOffset').value)||0;
@@ -194,7 +285,7 @@ if(tool==='lights'){
    if(mode==='balanced'){xMargin=length/(cols+1);xStep=xMargin;yMargin=width/(rows+1);yStep=yMargin}else{xMargin=fixed;yMargin=fixed;xStep=cols>1?(length-2*xMargin)/(cols-1):0;yStep=rows>1?(width-2*yMargin)/(rows-1):0}
    if(xStep<0||yStep<0){clearSmartResult('The fixed wall offset is too large for the selected grid.');return}
    const points=[];for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)points.push({x:cols===1?length/2:xMargin+c*xStep,y:rows===1?width/2:yMargin+r*yStep});
-   const list=points.map((p,i)=>({label:'Light '+(i+1),main:'X '+fmt(roundMark(p.x),true),sub:'Y '+fmt(roundMark(p.y),true)}));
+   const list=points.map((p,i)=>({label:'Light '+(i+1),main:'X '+markFmt(p.x),sub:'Y '+markFmt(p.y)}));
    state.data={field:list.map((m,i)=>({counter:'LIGHT '+(i+1)+' OF '+list.length,value:m.main,label:m.sub}))};
    setResults({title:'Recessed light layout',note:'This creates a <strong>'+rows+' × '+cols+'</strong> grid with <strong>'+fmt(fixture,true)+'</strong> fixtures and exact X/Y center coordinates.',a:points.length,b:fmt(rows===1?0:yStep,true),c:fmt(cols===1?0:xStep,true),marksTitle:'Light center coordinates',marks:list,dimensions:fmt(length,true)+' × '+fmt(width,true)+' room · '+fmt(fixture,true)+' fixture diameter',layout:rows+' rows · '+cols+' per row · '+points.length+' lights'});
    const d={length,width,fixture,rows,cols,points,xStep,yStep};draw(d,$('#diagram'));draw(d,$('#printDiagram'))
