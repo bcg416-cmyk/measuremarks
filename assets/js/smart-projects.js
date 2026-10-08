@@ -182,6 +182,18 @@ if(tool==='hardware'){
     }
     svg.appendChild(svgEl('text',{x:500,y:35,'text-anchor':'middle','font-size':10,'font-weight':700,fill:'#667067'},'DRAWING PROPORTIONAL TO '+fmt(d.width,true)+' × '+fmt(d.height,true)));
  }
+ function showHardwareFitWarning(width,height,message){
+   clearSmartResult(message);
+   const svg=$('#diagram');
+   if(!svg||!(width>0)||!(height>0))return;
+   baseSvg(svg,'Cabinet hardware — layout does not fit');
+   const scale=Math.min(500/width,230/height),w=Math.max(65,width*scale),h=Math.max(45,height*scale),left=490-w/2,top=186-h/2;
+   svg.appendChild(svgEl('rect',{x:left,y:top,width:w,height:h,rx:5,fill:'#f4f0e8',stroke:'#ae7b67','stroke-width':2}));
+   dimH(svg,left,left+w,366,'WIDTH '+fmt(width,true),top+h,top+h);
+   dimV(svg,top,top+h,left-34,'HEIGHT '+fmt(height,true),left,left);
+   svg.appendChild(svgEl('text',{x:490,y:47,'text-anchor':'middle','font-size':15,'font-weight':800,fill:'#a13d2f'},'NO VALID DRILL MARKS'));
+   svg.appendChild(svgEl('text',{x:490,y:67,'text-anchor':'middle','font-size':11,fill:'#405047'},'Adjust placement, orientation, or spacing to fit this part.'));
+ }
  function calc(){
    const width=Number($('#partWidth').value)||0,height=Number($('#partHeight').value)||0,style=$('#style').value,holeSpace=Number($('#holeSpacing').value)||0,place=$('#placement').value,orient=$('#orientation').value,offX=Number($('#edgeOffsetX').value)||0,offY=Number($('#edgeOffsetY').value)||0;
    if(!(width>0)||!(height>0)){clearSmartResult('Enter a part width and height greater than zero.');return}
@@ -196,7 +208,17 @@ if(tool==='hardware'){
    if(place.includes('lower'))cy=height-offY-(style==='pull'&&orient==='vertical'?half:0);
    const holes=[];if(style==='knob')holes.push({x:cx,y:cy});else if(orient==='vertical')holes.push({x:cx,y:cy-half},{x:cx,y:cy+half});else holes.push({x:cx-half,y:cy},{x:cx+half,y:cy})
    const invalid=holes.some(p=>p.x<0||p.x>width||p.y<0||p.y>height);
-   if(invalid){clearSmartResult('That hardware position does not fit on the cabinet part. Reduce an edge offset or the pull hole spacing.');return}
+   if(invalid){
+     let message='That hardware position does not fit on this part.';
+     if(style==='pull'&&orient==='vertical'&&(place.includes('upper')||place.includes('lower'))&&offY+holeSpace>height){
+       message='A '+fmt(holeSpace,true)+' vertical pull with a '+fmt(offY,true)+' '+(place.includes('upper')?'top':'bottom')+' offset needs at least '+fmt(offY+holeSpace,true)+' of part height. Choose Horizontal or Centered, or reduce the offset / pull spacing.';
+     }else if(style==='pull'&&orient==='horizontal'&&(place.includes('left')||place.includes('right'))&&offX+holeSpace>width){
+       message='A '+fmt(holeSpace,true)+' horizontal pull with a '+fmt(offX,true)+' '+(place.includes('right')?'right':'left')+' offset needs at least '+fmt(offX+holeSpace,true)+' of part width. Choose Vertical or Centered, or reduce the offset / pull spacing.';
+     }else{
+       message+=' Try Centered placement, change the pull orientation, or reduce the offsets / hole spacing.';
+     }
+     showHardwareFitWarning(width,height,message);return
+   }
    const side=place.includes('right')?'right':'left',vertical=place.includes('lower')?'bottom':'top';
     const list=holes.map((p,i)=>({label:style==='knob'?'Knob point':'Hole '+(i+1),main:fmt(roundMark(side==='right'?width-p.x:p.x),true)+' from '+side+' edge',sub:fmt(roundMark(vertical==='bottom'?height-p.y:p.y),true)+' from '+vertical+' edge'}));
     state.data={field:list.map((m,i)=>({counter:(style==='knob'?'POINT ':'HOLE ')+(i+1)+' OF '+list.length,value:m.main,label:m.sub}))};
