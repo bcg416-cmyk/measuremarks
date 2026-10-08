@@ -263,3 +263,23 @@ button{font:inherit;cursor:pointer}.primary-action,.secondary-action{width:100%;
 .mm-feedback-cancel{background:#fff;color:#176b43}
 .mm-feedback-form .mm-feedback-help{font-size:.9rem;line-height:1.5;margin:0}
 @media print{.mm-feedback{display:none!important}}
+
+/* Responsive official MeasureMarks branding. Text remains until image files load. */
+.brand{display:inline-flex;align-items:center;flex-shrink:0;position:relative;max-width:100%;color:#283136}
+.brand .brand-logo{display:none;object-fit:contain;max-width:100%;height:auto}
+.brand.has-logo .brand-text{display:none}
+.brand.has-logo .brand-logo{display:block}
+.brand.has-logo .brand-logo-desktop{width:clamp(210px,23vw,320px)}
+.brand.has-logo .brand-logo-mobile{display:none}
+@media(max-width:760px){
+ .nav{gap:9px;flex-wrap:wrap;padding:8px 0}
+ .brand.has-logo .brand-logo-desktop{display:none}
+ .brand.has-logo .brand-logo-mobile{display:block;width:clamp(165px,47vw,265px)}
+ .tagline{display:none}
+ .nav-links{gap:10px}
+ .nav-links a{font-size:.82rem}
+}
+@media(max-width:430px){
+ .nav-links{width:100%;justify-content:flex-start;flex-wrap:wrap;margin-left:0}
+ .brand.has-logo .brand-logo-mobile{width:min(260px,80vw)}
+}
