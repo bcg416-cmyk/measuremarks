@@ -234,3 +234,11 @@ button{font:inherit;cursor:pointer}.primary-action,.secondary-action{width:100%;
 .photo-lights{background-image:url('/assets/images/home-tools/recessed-lights.webp')}
 .photo-deck{background-image:url('/assets/images/home-tools/deck-boards.webp')}
 @media(max-width:600px){.tool-photo{height:150px}}
+
+/* Field Mode: allow Tape View and navigation on short desktop and mobile screens. */
+.field-overlay{overflow-y:auto;overscroll-behavior:contain;align-items:safe center;padding:54px 12px 24px;box-sizing:border-box}
+.field-card{max-height:none;min-height:0;margin:auto;box-sizing:border-box}
+.field-value{font-size:clamp(2.8rem,9vw,6rem);margin:12px 0 0;overflow-wrap:anywhere}
+.field-nav{margin-top:18px;padding-bottom:12px;flex-wrap:wrap}
+.field-overlay .tape-view{margin:12px auto 12px!important;max-width:700px!important}
+@media(max-height:750px){.field-overlay{display:block}.field-card{margin:0 auto}.field-value{font-size:clamp(2.5rem,7vw,4.3rem)}.field-tip{margin-top:10px}.field-nav{margin-top:12px}}

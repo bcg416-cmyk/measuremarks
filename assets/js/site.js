@@ -349,3 +349,68 @@ if ('serviceWorker' in navigator) {
     mobileBar.appendChild(pdf);
   }
 })();
+
+/* Shared calculator accessibility: semantic installation marks, status,
+   SVG summaries and modal keyboard support. Visual layouts are unchanged. */
+(() => {
+  const marks = document.getElementById('marks');
+  if (!marks) return;
+  const heading = document.getElementById('marksTitle');
+  marks.setAttribute('role','list');
+  if (heading) {
+    if (!heading.id) heading.id='marksTitle';
+    marks.setAttribute('aria-labelledby',heading.id);
+  } else marks.setAttribute('aria-label','Installation marks');
+  function updateMarks() {
+    for (const el of marks.querySelectorAll('.mark')) {
+      el.setAttribute('role','listitem');
+      const parts=[...el.children].map(node=>node.textContent.trim()).filter(Boolean);
+      const description=parts.join('. ');
+      if (description && el.getAttribute('aria-label')!==description) el.setAttribute('aria-label',description);
+    }
+  }
+  updateMarks();
+  new MutationObserver(updateMarks).observe(marks,{childList:true,subtree:true,characterData:true});
+  const note=document.getElementById('resultNote');
+  if(note){note.setAttribute('role','status');note.setAttribute('aria-live','polite');note.setAttribute('aria-atomic','true');}
+  const unitButtons=document.querySelectorAll('.seg[data-units]');
+  function syncUnitButtons(){unitButtons.forEach(b=>b.setAttribute('aria-pressed',String(b.classList.contains('active'))));}
+  syncUnitButtons();
+  unitButtons.forEach(b=>b.addEventListener('click',syncUnitButtons));
+  const field=document.getElementById('fieldOverlay');
+  if(field){
+    let previousFocus=null;
+    const opener=document.getElementById('openField'),mobile=document.getElementById('mobileField'),closer=document.getElementById('closeField');
+    for(const button of [opener,mobile])button?.addEventListener('click',()=>{
+      previousFocus=button;
+      queueMicrotask(()=>{if(!field.hidden)closer?.focus();});
+    });
+    closer?.addEventListener('click',()=>queueMicrotask(()=>previousFocus?.focus()));
+    const value=document.getElementById('fieldValue'),counter=document.getElementById('fieldCounter'),label=document.getElementById('fieldLabel');
+    const announced=document.createElement('div');
+    announced.setAttribute('role','status');announced.setAttribute('aria-live','polite');announced.setAttribute('aria-atomic','true');
+    announced.style.cssText='position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap';
+    field.appendChild(announced);
+    const announce=()=>{if(!field.hidden)announced.textContent=[counter?.textContent,value?.textContent,label?.textContent].filter(Boolean).join('. ');};
+    if(value)new MutationObserver(announce).observe(value,{childList:true,characterData:true,subtree:true});
+    for(const b of [opener,mobile])b?.addEventListener('click',()=>queueMicrotask(announce));
+    field.addEventListener('keydown',e=>{
+      if(e.key==='Escape'){e.preventDefault();closer?.click();}
+      if(e.key==='Tab'){
+        const focusables=[...field.querySelectorAll('button:not([disabled])')].filter(n=>n.getClientRects().length);
+        if(!focusables.length)return;
+        const first=focusables[0],last=focusables[focusables.length-1];
+        if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
+        else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
+      }
+    });
+  }
+  const svg=document.getElementById('diagram');
+  if(svg){
+    const headingText=document.querySelector('h1')?.textContent?.trim()||'Project';
+    svg.setAttribute('role','img');
+    svg.setAttribute('aria-label',headingText+' blueprint. Exact installation marks are listed below the diagram.');
+    const print=document.getElementById('printDiagram');
+    if(print){print.setAttribute('role','img');print.setAttribute('aria-label',headingText+' printable blueprint. Coordinates are also included in the print mark list.');}
+  }
+})();
