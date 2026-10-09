@@ -283,3 +283,20 @@ button{font:inherit;cursor:pointer}.primary-action,.secondary-action{width:100%;
  .nav-links{width:100%;justify-content:flex-start;flex-wrap:wrap;margin-left:0}
  .brand.has-logo .brand-logo-mobile{width:min(260px,80vw)}
 }
+
+/* Founder story and unobtrusive support links */
+.mm-founder-teaser{margin:4px auto 38px;padding:24px clamp(18px,3vw,34px);border-left:4px solid var(--accent);border-radius:0 12px 12px 0;background:#fff;box-shadow:0 8px 28px rgba(20,34,25,.045)}
+.mm-founder-teaser h2{font-size:clamp(1.35rem,2.8vw,2rem);margin:8px 0 10px}
+.mm-founder-teaser p{max-width:820px;line-height:1.65;margin:8px 0}
+.mm-founder-teaser a,.mm-support a{color:#176b43;font-weight:750}
+.mm-story{line-height:1.8}
+.mm-story p{margin:0 0 1.1em}
+.mm-story h2{margin-top:1.9em}
+.mm-story ul{margin:0 0 1.3em}
+.mm-support{margin:36px 0 30px;padding:20px;border:1px solid #d7ddd5;border-radius:13px;background:#f5f8f5}
+.mm-support h2{margin:0 0 8px}
+.mm-support p{max-width:690px}
+.mm-coffee-button{display:flex;flex-wrap:wrap;align-items:center;gap:16px}
+.mm-coffee-fallback{font-size:.9rem}
+@media(max-width:560px){.mm-home-support{display:block;margin-top:4px}}
+@media print{.mm-founder-teaser,.mm-support{display:none!important}}
