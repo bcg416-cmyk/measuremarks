@@ -414,3 +414,16 @@ if ('serviceWorker' in navigator) {
     if(print){print.setAttribute('role','img');print.setAttribute('aria-label',headingText+' printable blueprint. Coordinates are also included in the print mark list.');}
   }
 })();
+
+/* Lightweight footer support link — never overlays calculator results or Field Mode. */
+(() => {
+ const links=document.querySelector('.site-footer .footer-links');
+ if(!links||links.querySelector('.mm-support-footer'))return;
+ const a=document.createElement('a');
+ a.className='mm-support-footer';
+ a.href='https://buymeacoffee.com/bradleyc';
+ a.target='_blank';
+ a.rel='noopener noreferrer';
+ a.textContent='Support MeasureMarks ↗';
+ links.appendChild(a);
+})();
